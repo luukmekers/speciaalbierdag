@@ -976,6 +976,7 @@ const KLEUREN = [
   - kies:       trekker kiest wie de % krijgt (alle:true = ook zichzelf)
   - volgende:   modifier op het volgende biertje van de trekker
   - dubbel:     volgende biertje telt dubbel
+  - factor:     volgende biertje telt x keer (bijv. x1,5)
   - opdracht:   iets eten/doen voordat je verder mag drinken
   - actie:      alleen een opdracht, geen effect op de %
   - sprint:     tussensprint, punten voor de groene trui (full screen show)
@@ -1030,7 +1031,7 @@ const KAARTEN = [
   { n:1, icoon:"🧪", titel:"Dopingcontrole", tekst:"De koploper moet naar de dopingcontrole en drinkt eerst een glas water. -1,5% voor de koploper.", type:"koploper", waarde:-1.5 },
   { n:1, icoon:"🥖", titel:"Hongerklop", tekst:"Je bent vergeten te eten onderweg. Je volgende biertje telt 1,5% minder.", type:"volgende", waarde:-1.5, label:"hongerklop" },
   { n:1, icoon:"🪨", titel:"Kasseien", tekst:"Je rijdt over de kasseien van Roubaix. Drink je volgende biertje staand, en het telt 1% minder.", type:"volgende", waarde:-1, label:"kasseien" },
-  { n:1, icoon:"⛰️", titel:"Hors catégorie", tekst:"De zwaarste col van de Tour. Kies als volgende een bier van minstens 8%, dan krijg je +3% extra.", type:"volgende", waarde:3, label:"HC-col" },
+  { n:1, icoon:"⛰️", titel:"Hors catégorie", tekst:"De zwaarste col van de Tour: hoe zwaarder je volgende biertje, hoe meer het oplevert. Je volgende biertje telt anderhalf keer.", type:"factor", waarde:1.5 },
   { n:1, icoon:"🎒", titel:"Ravitaillering", tekst:"Pak een musette: eet iets van tafel voordat je verder mag drinken.", type:"opdracht", label:"🎒 iets eten" },
   { n:1, icoon:"🛌", titel:"Rustdag", tekst:"Rustdag! Je hoeft de komende 10 minuten niks te drinken. Geniet ervan.", type:"actie" },
   { n:1, icoon:"📸", titel:"Finishfoto", tekst:"Iedereen op de foto! Maak een groepsfoto met de glazen omhoog.", type:"actie" }
@@ -1040,6 +1041,7 @@ const KAARTEN = [
 function kaartSoort(k){
   if (["pct","buren","koploper","laatste","iedereen","kies"].includes(k.type))
     return k.waarde > 0 ? ["var(--groen)","Bonus"] : ["var(--rood)","Pech"];
+  if (k.type==="factor") return ["var(--groen)","Volgende bier"];
   if (k.type==="volgende") return k.waarde > 0 ? ["var(--groen)","Volgende bier"] : ["var(--rood)","Volgende bier"];
   if (k.type==="opdracht" || k.type==="actie") return ["var(--oranje)","Opdracht"];
   if (k.type==="sprint")   return ["var(--groen)","Groene trui"];
@@ -1581,6 +1583,7 @@ function effectTekst(e){
   switch(e.type){
     case "volgende":   return `<strong>${e.speler}</strong> volgende bier ${fmt(e.waarde)}${e.label?` (${e.label})`:""}`;
     case "dubbel":     return `💉 <strong>${e.speler}</strong> volgende bier telt dubbel`;
+    case "factor":     return `⛰️ <strong>${e.speler}</strong> volgende bier telt ×${String(e.waarde).replace(".",",")}`;
     case "opdracht":   return `<strong>${e.speler}</strong> moet eerst ${e.label}`;
     case "knecht":     return `🤝 <strong>${e.knecht}</strong> drinkt voor <strong>${e.speler}</strong>`;
     case "kopoverkop": return `🚴‍♂️ <strong>${e.speler}</strong> kop over kop met ${e.maat} (${fmt(e.waarde)})`;
@@ -1708,7 +1711,8 @@ function tekenKaart(){
   }
 
   const effect = ["pct","buren","koploper","laatste","iedereen","kies","volgende"].includes(k.type)
-    ? `<div class="effect">${fmt(k.waarde)}${k.type==="iedereen"?" voor iedereen":""}</div>` : "";
+    ? `<div class="effect">${fmt(k.waarde)}${k.type==="iedereen"?" voor iedereen":""}</div>`
+    : k.type==="factor" ? `<div class="effect">×${String(k.waarde).replace(".",",")}</div>` : "";
 
   el.className = "kaartplek vol";
   el.innerHTML = `
@@ -1771,6 +1775,9 @@ function pasToe(){
     case "dubbel":
       data.effecten.push({ type:"dubbel", speler:wie });
       break;
+    case "factor":
+      data.effecten.push({ type:"factor", speler:wie, waarde:k.waarde });
+      break;
     case "opdracht":
       data.effecten.push({ type:"opdracht", speler:wie, label:k.label });
       break;
@@ -1825,8 +1832,9 @@ function voegToe(){
   /* Modifiers van de ontvanger op het volgende bier */
   const extra = [];
   const mijn = data.effecten.filter(e=>e.speler===ontvanger &&
-    ["volgende","dubbel","kopoverkop","leegloper","opdracht"].includes(e.type));
+    ["volgende","dubbel","factor","kopoverkop","leegloper","opdracht"].includes(e.type));
   if (mijn.some(e=>e.type==="dubbel")){ v *= 2; extra.push("💉 dubbel"); }
+  mijn.filter(e=>e.type==="factor").forEach(e=>{ v *= e.waarde; extra.push(`⛰️ ×${String(e.waarde).replace(".",",")}`); });
   mijn.forEach(e=>{
     if (e.type==="volgende" || e.type==="kopoverkop"){
       v += e.waarde;
@@ -1855,7 +1863,7 @@ function voegToe(){
   /* Verbruikte effecten opruimen */
   data.effecten = data.effecten.filter(e=>!(
     e === knechtEffect ||
-    (e.speler===ontvanger && ["volgende","dubbel","kopoverkop","leegloper","opdracht"].includes(e.type)) ||
+    (e.speler===ontvanger && ["volgende","dubbel","factor","kopoverkop","leegloper","opdracht"].includes(e.type)) ||
     (e.speler===drinker && e.type==="opdracht")
   ));
 
