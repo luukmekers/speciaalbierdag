@@ -1061,38 +1061,127 @@ function confetti(){
 }
 
 /* ================= TEKEN ================= */
-function teken(){
+const KLIM_DUUR = 1600;     /* ms dat de fiets klimt */
+const BALLON_DUUR = 3200;   /* ms dat het ingevoerde % zichtbaar blijft */
+const geenAnimatie = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Mooie stapgrootte voor de assen: 1, 2, 2.5, 5, 10, ... */
+function mooieStap(bereik, aantal){
+  const ruw = bereik / aantal;
+  const macht = 10 ** Math.floor(Math.log10(ruw));
+  const f = ruw / macht;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * macht;
+}
+
+/* Doelstand van de grafiek: assen + positie van elke fiets */
+function doelWeergave(){
+  const s = Object.values(data.spelers);
+  const hoog = Math.max(...s.map(x=>x.pct), 10);
+  const laag = Math.min(...s.map(x=>x.pct), 0);
+  const stapP = mooieStap((hoog - laag) * 1.08, 5);
+  const veelBier = Math.max(...s.map(x=>x.bier), 5);
+  const stapB = Math.max(1, Math.round(mooieStap(veelBier * 1.1, 6)));
+  const koppen = {};
+  Object.entries(data.spelers).forEach(([n,x])=>{
+    const l = x.punten.at(-1);
+    koppen[n] = { bier:l.bier, pct:l.pct, n:x.punten.length };
+  });
+  return {
+    mn: Math.floor(laag / stapP) * stapP,
+    mp: Math.ceil(hoog * 1.08 / stapP) * stapP,
+    stapP,
+    mb: Math.ceil(veelBier * 1.1 / stapB) * stapB,
+    stapB,
+    koppen
+  };
+}
+
+let weergave = null;   /* wat er nu getekend staat */
+let animatie = null;   /* { van, naar, start, ballonnen } */
+
+const lerp = (a,b,t) => a + (b-a)*t;
+const soepel = t => t<.5 ? 4*t*t*t : 1 - (-2*t+2)**3/2;
+
+function startAnimatie(doel){
+  const van = weergave;
+  const zelfdeSpelers = van &&
+    Object.keys(van.koppen).join() === Object.keys(doel.koppen).join();
+  if (!zelfdeSpelers || geenAnimatie){
+    animatie = null;
+    weergave = doel;
+    tekenGrafiek(doel, 1, null);
+    return;
+  }
+  const ballonnen = {};
+  Object.entries(doel.koppen).forEach(([n,k])=>{
+    const verschil = k.pct - van.koppen[n].pct;
+    if (Math.abs(verschil) > 1e-9) ballonnen[n] = verschil;
+  });
+  animatie = { van, naar:doel, start:performance.now(), ballonnen };
+  requestAnimationFrame(animatieFrame);
+}
+
+function animatieFrame(nu){
+  if (!animatie) return;
+  const a = animatie;
+  const verstreken = nu - a.start;
+  const t = soepel(Math.min(1, verstreken / KLIM_DUUR));
+  const w = {
+    mn: lerp(a.van.mn, a.naar.mn, t),
+    mp: lerp(a.van.mp, a.naar.mp, t),
+    stapP: a.naar.stapP,
+    mb: lerp(a.van.mb, a.naar.mb, t),
+    stapB: a.naar.stapB,
+    koppen: {}
+  };
+  Object.entries(a.naar.koppen).forEach(([n,k])=>{
+    const v = a.van.koppen[n];
+    w.koppen[n] = { bier:lerp(v.bier,k.bier,t), pct:lerp(v.pct,k.pct,t), n:k.n, vanN:v.n };
+  });
+  weergave = w;
+  tekenGrafiek(w, t, { ballonnen:a.ballonnen, verstreken });
+  if (verstreken < BALLON_DUUR) requestAnimationFrame(animatieFrame);
+  else {
+    animatie = null;
+    weergave = a.naar;
+    tekenGrafiek(a.naar, 1, null);
+  }
+}
+
+function tekenGrafiek(w, t, extra){
   const spelers = data.spelers;
   ctx.clearRect(0,0,B,H);
   tekenAchtergrond();
 
-  const mb = Math.max(...Object.values(spelers).map(s=>s.bier), 5) * 1.1;
-  const mp = Math.max(...Object.values(spelers).map(s=>s.pct), 10) * 1.1;
-  const schaalX = b => startX + (b/mb) * (eindX - startX);
-  const schaalY = p => startY - (p/mp) * (startY - topY);
+  const schaalX = b => startX + (b/w.mb) * (eindX - startX);
+  const schaalY = p => startY - ((p - w.mn)/(w.mp - w.mn)) * (startY - topY);
   const hoogste = Math.max(...Object.values(spelers).map(s=>s.pct));
 
-  /* rasterlijnen + labels */
+  /* rasterlijnen op ronde waarden, label precies op de lijn */
   ctx.font = "600 12px Inter, Arial";
   ctx.lineWidth = 1;
-  for(let i=0;i<=5;i++){
-    const v=(i/5)*mp;
-    const y=schaalY(v);
-    ctx.strokeStyle = "rgba(22,22,22,.12)";
+  ctx.textAlign = "right";
+  const dec = w.stapP % 1 ? 1 : 0;
+  for (let v = Math.ceil(w.mn / w.stapP) * w.stapP; v <= w.mp + 1e-9; v += w.stapP){
+    const y = schaalY(v);
+    if (y < topY - 2 || y > startY + 1) continue;
+    const nul = Math.abs(v) < 1e-9;
+    ctx.strokeStyle = nul ? "rgba(22,22,22,.45)" : "rgba(22,22,22,.14)";
+    ctx.lineWidth = nul ? 1.5 : 1;
     ctx.beginPath();
     ctx.moveTo(startX,y);
     ctx.lineTo(eindX,y);
     ctx.stroke();
     ctx.fillStyle = "#161616";
-    ctx.textAlign = "right";
-    ctx.fillText(v.toFixed(0)+"%", startX-8, y+4);
+    ctx.fillText(v.toFixed(dec)+"%", startX-8, y+4);
   }
 
   ctx.textAlign = "center";
   ctx.fillStyle = "#ffffff";
-  for(let i=0;i<=5;i++){
-    const v=(i/5)*mb;
-    ctx.fillText(Math.round(v)+" 🍺", schaalX(v), startY+20);
+  for (let v = 0; v <= w.mb + 1e-9; v += w.stapB){
+    const x = schaalX(v);
+    if (x > eindX + 1) break;
+    ctx.fillText(v+" 🍺", x, startY+20);
   }
   ctx.textAlign = "left";
 
@@ -1100,14 +1189,22 @@ function teken(){
   const labels = [];
 
   Object.entries(spelers).forEach(([naam,s])=>{
-    /* lijn met witte rand */
+    const kop = w.koppen[naam];
+    const kopX = schaalX(kop.bier), kopY = schaalY(kop.pct);
+
+    /* punten die al "gereden" zijn, daarna door naar de fiets */
+    const tot = kop.vanN !== undefined && kop.vanN < s.punten.length ? kop.vanN : s.punten.length - 1;
+    const gereden = s.punten.slice(0, Math.max(1, tot));
+    const vorige = gereden.at(-1);
+
     const pad = () => {
       ctx.beginPath();
-      s.punten.forEach((p,i)=>{
+      gereden.forEach((p,i)=>{
         const x=schaalX(p.bier);
         const y=schaalY(p.pct);
         i?ctx.lineTo(x,y):ctx.moveTo(x,y);
       });
+      ctx.lineTo(kopX, kopY);
     };
     ctx.lineJoin = "round";
     ctx.lineCap = "round";
@@ -1120,11 +1217,18 @@ function teken(){
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    const l=s.punten.at(-1);
-    labels.push({ naam, s, x:schaalX(l.bier), y:schaalY(l.pct), leider: s.pct===hoogste && hoogste>0 });
+    /* hoek van het laatste stuk: zo zie je de fiets klimmen of dalen */
+    const dx = kopX - schaalX(vorige.bier);
+    const dy = kopY - schaalY(vorige.pct);
+    let hoek = Math.hypot(dx,dy) > 2 ? Math.atan2(dy, dx) : 0;
+    hoek = Math.max(-1.05, Math.min(0.6, hoek));
+
+    labels.push({ naam, s, x:kopX, y:kopY, hoek, pct:kop.pct,
+      leider: s.pct===hoogste && hoogste>0,
+      ballon: extra && extra.ballonnen[naam] });
 
     /* confetti bij 35% */
-    if(s.pct>=35 && !s.heeftConfetti){
+    if(s.pct>=35 && !s.heeftConfetti && t===1){
       s.heeftConfetti=true;
       nieuweConfetti = true;
     }
@@ -1135,10 +1239,10 @@ function teken(){
   const geplaatst = [];
   labels.forEach(lb=>{
     let ly = lb.y - 20;
-    while (geplaatst.some(g=>Math.abs(g.x-lb.x)<90 && Math.abs(g.ly-ly)<18)) ly += 18;
+    while (geplaatst.some(g=>Math.abs(g.x-lb.x)<110 && Math.abs(g.ly-ly)<18)) ly += 18;
     geplaatst.push({ x:lb.x, ly });
 
-    /* bolletje met fietser */
+    /* bolletje met fietser, gekanteld naar de helling */
     ctx.beginPath();
     ctx.arc(lb.x, lb.y, 13, 0, Math.PI*2);
     ctx.fillStyle = lb.leider ? "#ffd400" : "#ffffff";
@@ -1147,18 +1251,19 @@ function teken(){
     ctx.strokeStyle = lb.s.kleur;
     ctx.stroke();
     ctx.save();
-    ctx.translate(lb.x, lb.y+6);
+    ctx.translate(lb.x, lb.y);
+    ctx.rotate(lb.hoek);
     ctx.scale(-1,1);
     ctx.font = "16px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("🚴", 0, 0);
+    ctx.fillText("🚴", 0, 6);
     ctx.restore();
 
-    /* naamkaartje */
+    /* naamkaartje met actueel percentage (telt mee op tijdens het klimmen) */
     ctx.font = "700 12px Inter, Arial";
-    const tekst = lb.naam;
-    const w = ctx.measureText(tekst).width + 14;
-    const lx = Math.min(lb.x + 16, B - w - 4);
+    const tekst = `${lb.naam}  ${lb.pct.toFixed(1)}%`;
+    const tw = ctx.measureText(tekst).width + 14;
+    const lx = Math.min(lb.x + 16, B - tw - 4);
     /* verbindingslijntje als het label is opgeschoven */
     if (ly - lb.y > -14){
       ctx.beginPath();
@@ -1171,13 +1276,49 @@ function teken(){
 
     ctx.fillStyle = lb.leider ? "#ffd400" : lb.s.kleur;
     ctx.beginPath();
-    ctx.roundRect(lx, ly - 12, w, 18, 9);
+    ctx.roundRect(lx, ly - 12, tw, 18, 9);
     ctx.fill();
     ctx.fillStyle = lb.leider ? "#161616" : "#ffffff";
     ctx.fillText(tekst, lx + 7, ly + 1);
   });
 
+  /* ballon met het ingevoerde percentage boven de fiets */
+  labels.filter(lb=>lb.ballon).forEach(lb=>{
+    const e = extra.verstreken;
+    const zicht = Math.min(1, e/250, (BALLON_DUUR - e)/500);
+    const tekst = fmt(lb.ballon);
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, zicht);
+    ctx.font = "700 20px Oswald, Arial";
+    const bw = ctx.measureText(tekst).width + 22;
+    const bx = Math.max(4, Math.min(lb.x - bw/2, B - bw - 4));
+    const by = Math.max(4, lb.y - 64 - Math.min(1, e/KLIM_DUUR) * 8);
+    ctx.fillStyle = lb.ballon > 0 ? "#1f9d55" : "#d93a3a";
+    ctx.strokeStyle = "#161616";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, 32, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(lb.x - 6, by + 32);
+    ctx.lineTo(lb.x, by + 40);
+    ctx.lineTo(lb.x + 6, by + 32);
+    ctx.fill();
+    ctx.fillStyle = "#ffffff";
+    ctx.textAlign = "center";
+    ctx.fillText(tekst, bx + bw/2, by + 23);
+    ctx.restore();
+  });
+
   if (nieuweConfetti){ confetti(); opslaan(); }
+}
+
+function teken(){
+  const spelers = data.spelers;
+  const hoogste = Math.max(...Object.values(spelers).map(s=>s.pct));
+
+  startAnimatie(doelWeergave());
 
   document.getElementById("stats").innerHTML =
     Object.entries(spelers)
