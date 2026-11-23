@@ -1098,6 +1098,7 @@ function doelWeergave(){
 
 let weergave = null;   /* wat er nu getekend staat */
 let animatie = null;   /* { van, naar, start, ballonnen } */
+let vertraging = 0;    /* ms wachten met klimmen, zodat het scrollen eerst klaar is */
 
 const lerp = (a,b,t) => a + (b-a)*t;
 const soepel = t => t<.5 ? 4*t*t*t : 1 - (-2*t+2)**3/2;
@@ -1117,7 +1118,8 @@ function startAnimatie(doel){
     const verschil = k.pct - van.koppen[n].pct;
     if (Math.abs(verschil) > 1e-9) ballonnen[n] = verschil;
   });
-  animatie = { van, naar:doel, start:performance.now(), ballonnen };
+  animatie = { van, naar:doel, start:performance.now() + vertraging, ballonnen };
+  vertraging = 0;
   requestAnimationFrame(animatieFrame);
 }
 
@@ -1125,7 +1127,7 @@ function animatieFrame(nu){
   if (!animatie) return;
   const a = animatie;
   const verstreken = nu - a.start;
-  const t = soepel(Math.min(1, verstreken / KLIM_DUUR));
+  const t = soepel(Math.max(0, Math.min(1, verstreken / KLIM_DUUR)));
   const w = {
     mn: lerp(a.van.mn, a.naar.mn, t),
     mp: lerp(a.van.mp, a.naar.mp, t),
@@ -1649,9 +1651,21 @@ function voegToe(){
     .filter(e=>e.type==="wiel" && e.tot > Date.now() && e.speler!==drinker)
     .forEach(e=>geefPct(e.speler, 1, `😴 in het wiel (${drinker})`));
 
-  document.getElementById("percentage").value="";
+  const veld = document.getElementById("percentage");
+  veld.value = "";
+  veld.blur();   /* toetsenbord op telefoon dicht, zodat de grafiek zichtbaar is */
   opslaan();
+  naarGrafiek();
   teken();
+}
+
+/* Scroll naar de grafiek en laat de fiets pas klimmen als die in beeld is */
+function naarGrafiek(){
+  const g = document.getElementById("grafiek").getBoundingClientRect();
+  const inBeeld = g.top >= 0 && g.bottom <= innerHeight;
+  if (inBeeld) return;
+  document.getElementById("grafiek").scrollIntoView({ behavior: geenAnimatie ? "auto" : "smooth", block: "center" });
+  vertraging = 600;
 }
 
 /* ================= OVERIG ================= */
