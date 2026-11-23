@@ -673,13 +673,172 @@ body.start-open { overflow: hidden; }
   margin-bottom: 14px;
 }
 
+/* ===== Sprintshow ===== */
+#sprintshow {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  color: #fff;
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 40px, transparent 40px 80px),
+    radial-gradient(circle at 50% 30%, #2bbd6a, #137a3f 70%);
+  background-size: 200% 100%, 100% 100%;
+  animation: snelheid 1.2s linear infinite;
+  overflow-y: auto;
+}
+
+#sprintshow.open { display: flex; }
+
+@keyframes snelheid {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: -180px 0, 0 0; }
+}
+
+.finishlijn {
+  height: 28px;
+  flex: none;
+  background:
+    conic-gradient(#161616 25%, #fff 0 50%, #161616 0 75%, #fff 0) 0 0 / 28px 28px;
+}
+
+.sprint-inhoud {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.sprint-titel {
+  font-family: Oswald, Arial, sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: clamp(36px, 9vw, 84px);
+  line-height: 1;
+  letter-spacing: .03em;
+  text-shadow: 0 4px 0 rgba(0,0,0,.25);
+}
+
+.sprint-sub {
+  font-size: clamp(15px, 2.6vw, 20px);
+  opacity: .95;
+  max-width: 640px;
+}
+
+.sprint-klok {
+  font-family: Oswald, Arial, sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  font-size: clamp(90px, 24vw, 240px);
+  line-height: 1;
+  color: var(--geel);
+  text-shadow: 0 6px 0 rgba(0,0,0,.3);
+  min-height: 1em;
+}
+
+.sprint-klok.loopt {
+  color: #fff;
+  font-size: clamp(64px, 15vw, 150px);
+}
+
+.sprint-klok.pop { animation: pop .9s ease-out; }
+
+@keyframes pop {
+  0%   { transform: scale(2.2); opacity: 0; }
+  25%  { transform: scale(1);   opacity: 1; }
+  80%  { transform: scale(.9);  opacity: 1; }
+  100% { transform: scale(.7);  opacity: .2; }
+}
+
+.sprint-podium {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 170px));
+  gap: 10px;
+  align-items: end;
+  width: 100%;
+  justify-content: center;
+}
+
+.trede {
+  background: rgba(0,0,0,.25);
+  border: 2px solid rgba(255,255,255,.4);
+  border-radius: 12px 12px 4px 4px;
+  padding: 10px 6px;
+  min-height: 92px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.trede.p1 { min-height: 128px; order: 2; }
+.trede.p2 { min-height: 108px; order: 1; }
+.trede.p3 { order: 3; }
+
+.trede.bezet {
+  background: #fff;
+  color: var(--zwart);
+  border-color: var(--zwart);
+  animation: erbij .3s ease-out;
+}
+
+.trede .medaille { font-size: 28px; }
+.trede .wie { font-weight: 700; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trede .tijd { font-size: 13px; opacity: .8; font-variant-numeric: tabular-nums; }
+.trede .pt { font-family: Oswald, Arial, sans-serif; font-size: 15px; }
+
+.sprint-namen {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+  width: 100%;
+  max-width: 760px;
+}
+
+.sprint-namen button {
+  font-size: 18px;
+  padding: 14px 10px;
+  border-left: 10px solid var(--kleur);
+}
+
+.sprint-namen button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.sprint-onder {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.sprint-onder button.groot {
+  font-family: Oswald, Arial, sans-serif;
+  text-transform: uppercase;
+  font-size: 22px;
+  padding: 14px 28px;
+  background: var(--geel);
+}
+
+.sprint-onder button.ghost {
+  background: transparent;
+  color: #fff;
+  border-color: rgba(255,255,255,.6);
+}
+
 #confetti {
   position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
   pointer-events: none;
-  z-index: 9;
+  z-index: 40;
 }
 </style>
 </head>
@@ -778,6 +937,19 @@ body.start-open { overflow: hidden; }
   </div>
 </div>
 
+<div id="sprintshow" role="dialog" aria-label="Tussensprint">
+  <div class="finishlijn"></div>
+  <div class="sprint-inhoud">
+    <div class="sprint-titel">🏁 Tussensprint 🏁</div>
+    <div class="sprint-sub" id="sprintSub"></div>
+    <div class="sprint-klok" id="sprintKlok"></div>
+    <div class="sprint-podium" id="sprintPodium"></div>
+    <div class="sprint-namen" id="sprintNamen"></div>
+    <div class="sprint-onder" id="sprintOnder"></div>
+  </div>
+  <div class="finishlijn"></div>
+</div>
+
 <canvas id="confetti"></canvas>
 <div class="melding" id="melding"></div>
 
@@ -799,52 +971,77 @@ const KLEUREN = [
   - pct:        direct +/- % voor de trekker
   - buren:      direct % voor trekker + gekozen buren (links / rechts)
   - koploper:   direct % voor de huidige koploper
+  - laatste:    direct % voor de nummer laatst (lanterne rouge)
+  - iedereen:   direct % voor het hele peloton
+  - kies:       trekker kiest wie de % krijgt (alle:true = ook zichzelf)
   - volgende:   modifier op het volgende biertje van de trekker
   - dubbel:     volgende biertje telt dubbel
   - opdracht:   iets eten/doen voordat je verder mag drinken
-  - sprint:     tussensprint, punten voor de groene trui
+  - actie:      alleen een opdracht, geen effect op de %
+  - sprint:     tussensprint, punten voor de groene trui (full screen show)
   - knecht:     gekozen ploegmaat drinkt volgende bier voor jou
   - wiel:       10 min: elk bier van een ander geeft jou +1%
   - kopoverkop: jij + ploegmaat volgende bier +1,5%
   - leegloper:  direct -1%, daarna elke 5 min -1% tijdens je volgende bier
 */
+const KAART_VERSIE = 2;
 const KAARTEN = [
+  /* uit Tour.docx */
   { n:1, icoon:"💥", titel:"Valpartij", tekst:"Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2 },
-  { n:2, icoon:"🤕", titel:"Massale valpartij", tekst:"-2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
-  { n:3, icoon:"🍟", titel:"Chasse patate", tekst:"Eet een bakje patatchips op voordat je verder mag drinken.", type:"opdracht", label:"🍟 chips eten" },
-  { n:3, icoon:"🍪", titel:"Pepernoot in de band", tekst:"Eet een bakje pepernoten op voordat je verder mag drinken.", type:"opdracht", label:"🍪 pepernoten eten" },
-  { n:3, icoon:"🧴", titel:"Plakbidonnetje", tekst:"Drink je volgende biertje uit een bidon, en dan +2%.", type:"volgende", waarde:2, label:"bidon" },
+  { n:1, icoon:"🤕", titel:"Massale valpartij", tekst:"-2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:1, icoon:"🍟", titel:"Chasse patate", tekst:"Eet een bakje patatchips op voordat je verder mag drinken.", type:"opdracht", label:"🍟 chips eten" },
+  { n:1, icoon:"🍪", titel:"Pepernoot in de band", tekst:"Eet een bakje pepernoten op voordat je verder mag drinken.", type:"opdracht", label:"🍪 pepernoten eten" },
+  { n:1, icoon:"🧴", titel:"Plakbidonnetje", tekst:"Drink je volgende biertje uit een bidon, en dan +2%.", type:"volgende", waarde:2, label:"bidon" },
   { n:1, icoon:"💉", titel:"Dopingshot", tekst:"Neem een shotje. Als beloning telt je volgende biertje dubbel (geen % voor het shotje).", type:"dubbel" },
-  { n:3, icoon:"🏁", titel:"Tussensprint", tekst:"Wie nu als eerste zijn biertje op heeft krijgt punten voor de groene trui. 1e: 5 pt, 2e: 3 pt, 3e: 1 pt.", type:"sprint" },
+  { n:3, icoon:"🏁", titel:"Tussensprint", tekst:"Iedereen drinkt zijn biertje leeg, zo snel als het kan. Wie het eerst leeg is krijgt punten voor de groene trui. 1e: 5 pt, 2e: 3 pt, 3e: 1 pt.", type:"sprint" },
   { n:1, icoon:"🫗", titel:"Leegloper", tekst:"Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
-  { n:3, icoon:"🤝", titel:"Knecht", tekst:"Wijs iemand aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, icoon:"🤝", titel:"Knecht", tekst:"Wijs iemand aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
   { n:1, icoon:"😴", titel:"Linkeballen", tekst:"10 minuutjes in het wiel uitrusten. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
   { n:1, icoon:"🚴‍♂️", titel:"Kop over kop", tekst:"Kies een ploegmaat. Jullie drinken het volgende biertje tegelijk (gezamenlijke slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
   { n:1, icoon:"🌬️", titel:"Op kop in de wind", tekst:"De koploper fietst alleen in de wind tegen het peloton: -2,5% voor de koploper.", type:"koploper", waarde:-2.5 },
-  { n:2, icoon:"⚡", titel:"Gelletje", tekst:"+2% voor jou en degene links van je.", type:"buren", waarde:2, links:true },
+  { n:1, icoon:"⚡", titel:"Gelletje", tekst:"+2% voor jou en degene links van je.", type:"buren", waarde:2, links:true },
   { n:1, icoon:"🧲", titel:"Wieltjeszuiger", tekst:"Je bent een wieltjeszuiger.", type:"pct", waarde:1 },
   { n:1, icoon:"🪤", titel:"Prikkeldraad", tekst:"Je bent in het prikkeldraad gefietst.", type:"pct", waarde:-2 },
   { n:1, icoon:"💩", titel:"Tom Dumoulin", tekst:"Je moet poepen en loopt daardoor achterstand op.", type:"pct", waarde:-2 },
-  { n:3, icoon:"📰", titel:"Afdaling", tekst:"Je zit in een afdaling, door het krantje blijf je lekker warm.", type:"pct", waarde:1 },
+  { n:1, icoon:"📰", titel:"Afdaling", tekst:"Je zit in een afdaling, door het krantje blijf je lekker warm.", type:"pct", waarde:1 },
   { n:1, icoon:"🌪️", titel:"Waaier", tekst:"Je zit aan de verkeerde kant van de waaier.", type:"pct", waarde:-2 },
   { n:1, icoon:"🍃", titel:"Waaier", tekst:"Je zit aan de goede kant van de waaier.", type:"pct", waarde:2 },
   { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
   { n:1, icoon:"☕", titel:"Koffiemolen", tekst:"Koffiemolen, dit schiet niet op...", type:"pct", waarde:-2 },
   { n:1, icoon:"🚀", titel:"Mooie demarrage", tekst:"Wat een aanval!", type:"pct", waarde:2 },
   { n:1, icoon:"🎙️", titel:"Mart Smeets", tekst:"Je zeurt net zoals Mart Smeets.", type:"pct", waarde:-1 },
-  { n:2, icoon:"🥵", titel:"Lossen", tekst:"Je moet lossen.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🥵", titel:"Lossen", tekst:"Je moet lossen.", type:"pct", waarde:-2 },
   { n:1, icoon:"🔥", titel:"Gat dichtrijden", tekst:"Je rijdt het gat naar de kopgroep dicht.", type:"pct", waarde:2 },
   { n:1, icoon:"🅿️", titel:"Geparkeerd", tekst:"Je staat geparkeerd.", type:"pct", waarde:-1 },
   { n:1, icoon:"🔨", titel:"Man met de hamer", tekst:"Je komt de man met de hamer tegen.", type:"pct", waarde:-1 },
-  { n:1, icoon:"💐", titel:"De dood of de gladiolen", tekst:"Alles of niets!", type:"pct", waarde:1 }
+  { n:1, icoon:"💐", titel:"De dood of de gladiolen", tekst:"Alles of niets!", type:"pct", waarde:1 },
+
+  /* nieuwe kaarten */
+  { n:1, icoon:"🏮", titel:"Lanterne rouge", tekst:"De rode lantaarn krijgt medelijden van het peloton. De nummer laatst krijgt +2%.", type:"laatste", waarde:2 },
+  { n:1, icoon:"🚴‍♀️", titel:"Ploegentijdrit", tekst:"Het hele peloton werkt samen. Proost met z'n allen: iedereen +1%.", type:"iedereen", waarde:1 },
+  { n:1, icoon:"🌧️", titel:"Regen in de afdaling", tekst:"Het giet en de weg is spekglad. Het hele peloton -1%.", type:"iedereen", waarde:-1 },
+  { n:1, icoon:"💧", titel:"Waterdrager", tekst:"Je haalt bidons voor een ploegmaat. Kies iemand die +1,5% krijgt.", type:"kies", waarde:1.5 },
+  { n:1, icoon:"📻", titel:"Radio Tour", tekst:"Je roept tactische onzin door de oortjes van een tegenstander. Kies iemand die -1,5% krijgt.", type:"kies", waarde:-1.5 },
+  { n:1, icoon:"🏅", titel:"Prijs van de strijdlust", tekst:"De groep wijst samen de strijdlustigste renner van de dag aan (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
+  { n:1, icoon:"⏱️", titel:"Bonificatieseconden", tekst:"Je pakt bonificatieseconden aan de finish.", type:"pct", waarde:1.5 },
+  { n:1, icoon:"🛞", titel:"Lekke band", tekst:"Lekke band! Je staat langs de kant te wachten op de volgwagen.", type:"pct", waarde:-1.5 },
+  { n:1, icoon:"🏆", titel:"Podiumceremonie", tekst:"Sta op, hef je glas en geef een overwinningsspeech van 30 seconden.", type:"pct", waarde:1.5 },
+  { n:1, icoon:"😈", titel:"De duivel langs de weg", tekst:"Een verklede fan rent naast je mee. Ren een rondje om de tafel.", type:"pct", waarde:1 },
+  { n:1, icoon:"🧪", titel:"Dopingcontrole", tekst:"De koploper moet naar de dopingcontrole en drinkt eerst een glas water. -1,5% voor de koploper.", type:"koploper", waarde:-1.5 },
+  { n:1, icoon:"🥖", titel:"Hongerklop", tekst:"Je bent vergeten te eten onderweg. Je volgende biertje telt 1,5% minder.", type:"volgende", waarde:-1.5, label:"hongerklop" },
+  { n:1, icoon:"🪨", titel:"Kasseien", tekst:"Je rijdt over de kasseien van Roubaix. Drink je volgende biertje staand, en het telt 1% minder.", type:"volgende", waarde:-1, label:"kasseien" },
+  { n:1, icoon:"⛰️", titel:"Hors catégorie", tekst:"De zwaarste col van de Tour. Kies als volgende een bier van minstens 8%, dan krijg je +3% extra.", type:"volgende", waarde:3, label:"HC-col" },
+  { n:1, icoon:"🎒", titel:"Ravitaillering", tekst:"Pak een musette: eet iets van tafel voordat je verder mag drinken.", type:"opdracht", label:"🎒 iets eten" },
+  { n:1, icoon:"🛌", titel:"Rustdag", tekst:"Rustdag! Je hoeft de komende 10 minuten niks te drinken. Geniet ervan.", type:"actie" },
+  { n:1, icoon:"📸", titel:"Finishfoto", tekst:"Iedereen op de foto! Maak een groepsfoto met de glazen omhoog.", type:"actie" }
 ];
 
 /* Kleur en label van een kaart */
 function kaartSoort(k){
-  if (k.type==="pct" || k.type==="buren" || k.type==="koploper")
+  if (["pct","buren","koploper","laatste","iedereen","kies"].includes(k.type))
     return k.waarde > 0 ? ["var(--groen)","Bonus"] : ["var(--rood)","Pech"];
   if (k.type==="volgende") return k.waarde > 0 ? ["var(--groen)","Volgende bier"] : ["var(--rood)","Volgende bier"];
-  if (k.type==="opdracht") return ["var(--oranje)","Opdracht"];
+  if (k.type==="opdracht" || k.type==="actie") return ["var(--oranje)","Opdracht"];
   if (k.type==="sprint")   return ["var(--groen)","Groene trui"];
   return ["var(--paars)","Tactiek"];
 }
@@ -890,7 +1087,7 @@ function nieuweStapel(){
 }
 
 function nieuweData(namen){
-  const d = { namen, spelers:{}, log:[], stapel:nieuweStapel(), effecten:[], huidigeKaart:null };
+  const d = { namen, spelers:{}, log:[], stapel:nieuweStapel(), effecten:[], huidigeKaart:null, kaartVersie:KAART_VERSIE };
   namen.forEach((n,i)=>{ d.spelers[n] = nieuweSpeler(i); });
   return d;
 }
@@ -898,6 +1095,13 @@ function nieuweData(namen){
 let data;
 try { data = JSON.parse(localStorage.getItem(OPSLAG)); } catch(e) { data = null; }
 if (!data || !data.namen || !data.spelers) data = nieuweData([...STANDAARD_SPELERS]);
+
+/* Kaartenset veranderd: stapel opnieuw schudden, stand blijft staan */
+if (data.kaartVersie !== KAART_VERSIE){
+  data.stapel = nieuweStapel();
+  data.huidigeKaart = null;
+  data.kaartVersie = KAART_VERSIE;
+}
 
 let undoStapel = [];
 try { undoStapel = JSON.parse(localStorage.getItem(OPSLAG+"Undo")) || []; } catch(e) {}
@@ -1437,7 +1641,10 @@ function trekKaart(){
   data.huidigeKaart = { index: data.stapel.pop(), speler: select.value, toegepast: false, id: Date.now() };
   opslaan();
   teken();
+  if (KAARTEN[data.huidigeKaart.index].type === "sprint") setTimeout(openSprint, 900);
 }
+
+const laatste = () => Object.entries(data.spelers).sort((a,b)=>a[1].pct-b[1].pct)[0][0];
 
 function opties(uitsluiten, standaard){
   return data.namen.filter(n=>!uitsluiten.includes(n))
@@ -1483,18 +1690,25 @@ function tekenKaart(){
       acties = veld("Ploegmaat", `<select id="kMaat">${opties([wie])}</select>`) +
         `<button class="primair" onclick="pasToe()">Kiezen</button>`;
       break;
-    case "sprint": {
-      const s = (id,p)=>veld(p, `<select id="${id}"><option value="">–</option>${opties([])}</select>`);
-      acties = s("kS1","🥇 5 pt") + s("kS2","🥈 3 pt") + s("kS3","🥉 1 pt") +
-        `<button class="primair" onclick="pasToe()">Punten toekennen</button>`;
+    case "laatste":
+      acties = `<div>Lanterne rouge: <strong>${laatste()}</strong></div><button class="primair" onclick="pasToe()">Toepassen</button>`;
       break;
-    }
+    case "kies":
+      acties = veld("Renner", `<select id="kMaat">${opties(k.alle ? [] : [wie])}</select>`) +
+        `<button class="primair" onclick="pasToe()">Toepassen</button>`;
+      break;
+    case "actie":
+      acties = `<button class="primair" onclick="pasToe()">Gedaan!</button>`;
+      break;
+    case "sprint":
+      acties = `<button class="primair" onclick="openSprint()">🏁 Start de sprint</button>`;
+      break;
     default:
       acties = `<button class="primair" onclick="pasToe()">Toepassen</button>`;
   }
 
-  const effect = (k.type==="pct" || k.type==="buren" || k.type==="koploper" || k.type==="volgende")
-    ? `<div class="effect">${fmt(k.waarde)}</div>` : "";
+  const effect = ["pct","buren","koploper","laatste","iedereen","kies","volgende"].includes(k.type)
+    ? `<div class="effect">${fmt(k.waarde)}${k.type==="iedereen"?" voor iedereen":""}</div>` : "";
 
   el.className = "kaartplek vol";
   el.innerHTML = `
@@ -1576,18 +1790,17 @@ function pasToe(){
       geefPct(wie, -1, wat);
       data.effecten.push({ type:"leegloper", speler:wie, laatste: Date.now() });
       break;
-    case "sprint": {
-      const gekozen = [["kS1",5],["kS2",3],["kS3",1]]
-        .map(([id,pt])=>[waarde(id),pt]).filter(([n])=>n);
-      if (new Set(gekozen.map(g=>g[0])).size !== gekozen.length){
-        undoStapel.pop();
-        melding("Iedere renner mag maar één plek krijgen");
-        return;
-      }
-      gekozen.forEach(([n,pt])=>{ sp(n).groen += pt; });
-      melding("Groene trui punten toegekend 🟢");
+    case "laatste":
+      geefPct(laatste(), k.waarde, wat);
       break;
-    }
+    case "iedereen":
+      data.namen.forEach(n=>geefPct(n, k.waarde, wat));
+      break;
+    case "kies":
+      geefPct(waarde("kMaat"), k.waarde, wat);
+      break;
+    case "actie":
+      break;
   }
 
   hk.toegepast = true;
@@ -1683,6 +1896,166 @@ function resetGame(){
   undoStapel = [];
   opslaan();
   teken();
+}
+
+/* ================= SPRINTSHOW ================= */
+const SPRINT_PUNTEN = [5, 3, 1];
+const AFTELLEN = 5;
+let sprint = null;   /* { fase: klaar|aftellen|race|finish, start, volgorde:[{naam,tijd}] } */
+let geluid = null;
+
+function piep(freq, duur){
+  try {
+    geluid = geluid || new (window.AudioContext || window.webkitAudioContext)();
+    const osc = geluid.createOscillator();
+    const vol = geluid.createGain();
+    osc.frequency.value = freq;
+    osc.type = "square";
+    vol.gain.setValueAtTime(.15, geluid.currentTime);
+    vol.gain.exponentialRampToValueAtTime(.001, geluid.currentTime + duur);
+    osc.connect(vol).connect(geluid.destination);
+    osc.start();
+    osc.stop(geluid.currentTime + duur);
+  } catch(e) {}
+}
+
+const fmtTijd = ms => {
+  const s = Math.max(0, ms) / 1000;
+  return `${Math.floor(s/60)}:${(s%60).toFixed(1).padStart(4,"0")}`;
+};
+
+function openSprint(){
+  const hk = data.huidigeKaart;
+  if (!hk || hk.toegepast || KAARTEN[hk.index].type !== "sprint") return;
+  sprint = { fase:"klaar", start:0, volgorde:[] };
+  document.getElementById("sprintshow").classList.add("open");
+  document.body.classList.add("start-open");
+  tekenSprint();
+}
+
+function sluitSprint(){
+  if (sprint) sprint.fase = "dicht";
+  sprint = null;
+  document.getElementById("sprintshow").classList.remove("open");
+  document.body.classList.remove("start-open");
+}
+
+function sprintAftellen(){
+  sprint.fase = "aftellen";
+  tekenSprint();
+  const klok = document.getElementById("sprintKlok");
+  const huidig = sprint;
+  let n = AFTELLEN;
+  const stap = () => {
+    if (sprint !== huidig) return;
+    klok.classList.remove("pop");
+    void klok.offsetWidth;
+    klok.classList.add("pop");
+    if (n > 0){
+      klok.innerText = n;
+      piep(n <= 3 ? 660 : 440, .15);
+      n--;
+      setTimeout(stap, 1000);
+    } else {
+      klok.innerText = "GO!";
+      piep(990, .6);
+      sprint.fase = "race";
+      sprint.start = performance.now();
+      setTimeout(()=>{ if (sprint === huidig) { tekenSprint(); loopKlok(); } }, 700);
+    }
+  };
+  stap();
+}
+
+function loopKlok(){
+  if (!sprint || sprint.fase !== "race") return;
+  document.getElementById("sprintKlok").innerText = fmtTijd(performance.now() - sprint.start);
+  requestAnimationFrame(loopKlok);
+}
+
+const sprintPlekken = () => Math.min(SPRINT_PUNTEN.length, data.namen.length);
+
+function sprintFinish(naam){
+  if (!sprint || sprint.fase !== "race") return;
+  if (sprint.volgorde.some(v=>v.naam===naam)) return;
+  sprint.volgorde.push({ naam, tijd: performance.now() - sprint.start });
+  piep(880, .12);
+  if (sprint.volgorde.length >= sprintPlekken()){
+    sprint.fase = "finish";
+    confetti();
+    piep(1320, .5);
+  }
+  tekenSprint();
+}
+
+function sprintTerug(){
+  if (!sprint || !sprint.volgorde.length) return;
+  sprint.volgorde.pop();
+  if (sprint.fase === "finish"){ sprint.fase = "race"; loopKlok(); }
+  tekenSprint();
+}
+
+function sprintToekennen(){
+  const hk = data.huidigeKaart;
+  if (!sprint || !hk) return;
+  snapshot();
+  sprint.volgorde.forEach((v,i)=>{ sp(v.naam).groen += SPRINT_PUNTEN[i]; });
+  hk.toegepast = true;
+  const winnaar = sprint.volgorde[0];
+  opslaan();
+  sluitSprint();
+  teken();
+  melding(winnaar ? `🟢 ${winnaar.naam} wint de tussensprint!` : "Sprint afgelopen");
+}
+
+function tekenSprint(){
+  if (!sprint) return;
+  const f = sprint.fase;
+  const sub = document.getElementById("sprintSub");
+  const klok = document.getElementById("sprintKlok");
+  const onder = document.getElementById("sprintOnder");
+  const namen = document.getElementById("sprintNamen");
+
+  sub.innerHTML = {
+    klaar:    "Iedereen pakt zijn glas. Na het aftellen drinkt iedereen zijn biertje zo snel mogelijk leeg.<br><strong>1e: 5 pt · 2e: 3 pt · 3e: 1 pt</strong> voor de groene trui",
+    aftellen: "Glazen omhoog...",
+    race:     "Glas leeg? Tik direct op je naam!",
+    finish:   "🏆 De sprint is beslist!"
+  }[f];
+
+  klok.classList.toggle("loopt", f === "race" || f === "finish");
+  klok.hidden = f === "klaar";
+  if (f === "finish") klok.innerText = fmtTijd(sprint.volgorde.at(-1).tijd);
+
+  document.getElementById("sprintPodium").innerHTML = (f === "race" || f === "finish")
+    ? SPRINT_PUNTEN.slice(0, sprintPlekken()).map((pt,i)=>{
+        const v = sprint.volgorde[i];
+        return `<div class="trede p${i+1} ${v?"bezet":""}">
+          <div class="medaille">${["🥇","🥈","🥉"][i]}</div>
+          <div class="wie">${v ? v.naam : "…"}</div>
+          <div class="tijd">${v ? fmtTijd(v.tijd) : ""}</div>
+          <div class="pt">${pt} pt</div>
+        </div>`;
+      }).join("")
+    : "";
+
+  namen.innerHTML = f === "race"
+    ? data.namen.map(n=>{
+        const klaar = sprint.volgorde.some(v=>v.naam===n);
+        return `<button style="--kleur:${sp(n).kleur}" ${klaar?"disabled":""}
+          onclick="sprintFinish(${JSON.stringify(n).replace(/"/g,"&quot;")})">${klaar?"✔ ":""}${n}</button>`;
+      }).join("")
+    : "";
+
+  onder.innerHTML = {
+    klaar:    `<button class="ghost" onclick="sluitSprint()">Later</button>
+               <button class="groot" onclick="sprintAftellen()">⏱ Start aftellen</button>`,
+    aftellen: "",
+    race:     `<button class="ghost" onclick="sprintTerug()" ${sprint.volgorde.length?"":"disabled"}>↩ Laatste weg</button>
+               <button class="ghost" onclick="sprintToekennen()" ${sprint.volgorde.length?"":"disabled"}>Stoppen & punten geven</button>`,
+    finish:   `<button class="ghost" onclick="sprintTerug()">↩ Laatste weg</button>
+               <button class="groot" onclick="sprintToekennen()">🟢 Punten toekennen</button>`
+  }[f];
 }
 
 /* ================= STARTSCHERM ================= */
