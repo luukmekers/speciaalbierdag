@@ -546,6 +546,103 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .melding.aan { opacity: 1; transform: translate(-50%, 0); }
 
+/* ===== Beamer: alles op één scherm, zonder scrollen ===== */
+body.beamer {
+  height: var(--hoogte, 100vh);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+body.beamer header { flex: none; padding: 8px 16px 16px; }
+body.beamer header .sub { display: none; }
+body.beamer h1 { font-size: 34px; margin: 0; }
+body.beamer h1 br { display: none; }
+
+body.beamer main {
+  flex: 1;
+  min-height: 0;
+  max-width: none;
+  width: 100%;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr) 300px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+body.beamer .paneel { margin: 0; }
+
+body.beamer .invoer { grid-column: 1; grid-row: 1; grid-template-columns: 1fr 96px; gap: 8px; padding: 12px; }
+body.beamer .invoer select, body.beamer .invoer input { padding: 9px 10px; }
+body.beamer .invoer button.primair { padding: 9px 14px; }
+body.beamer .invoer .primair { grid-column: 1 / -1; }
+
+body.beamer #kaartpaneel { grid-column: 1; grid-row: 2; overflow-y: auto; min-height: 0; }
+body.beamer #kaartpaneel h2 { margin-bottom: 8px; }
+body.beamer .kaartzone { grid-template-columns: 1fr; gap: 10px; }
+body.beamer .stapelvak { display: flex; align-items: center; gap: 14px; text-align: left; }
+body.beamer .stapelknop { width: 64px; height: 88px; margin: 0 6px 6px 0; flex: none; }
+body.beamer #kaartpaneel { padding: 12px; }
+body.beamer .kaart .voor { margin-bottom: 4px; }
+body.beamer .kaart .acties { gap: 6px; }
+body.beamer .kaart .acties label { grid-template-columns: 64px 1fr; }
+body.beamer .kaart .acties select { padding: 6px 8px; }
+body.beamer .kaart .acties button { padding: 8px 12px; }
+body.beamer #effecten { margin-top: 10px; flex: none; }
+body.beamer #effecten h2 { display: none; }
+body.beamer .stapelknop .rug { background:
+    radial-gradient(circle at 50% 50%, var(--geel) 0 17px, transparent 18px),
+    repeating-linear-gradient(45deg, var(--zwart) 0 6px, #2a2a2a 6px 12px); }
+body.beamer .stapelknop .rug:nth-child(3) { font-size: 18px; }
+body.beamer .stapelknop .label { display: none; }
+body.beamer .kaartplek { min-height: 120px; }
+body.beamer .kaart .kop { padding: 10px 12px; }
+body.beamer .kaart .icoon { width: 44px; height: 44px; font-size: 26px; }
+body.beamer .kaart .titel { font-size: 22px; }
+body.beamer .kaart .lijf { padding: 12px; }
+body.beamer .kaart .tekst { font-size: 16px; margin-bottom: 10px; }
+body.beamer .kaart .effect { margin-bottom: 10px; }
+
+body.beamer .grafiekpaneel {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+body.beamer .grafiekscroll { flex: 1; min-height: 0; overflow: hidden; }
+
+body.beamer #grafiek {
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+body.beamer .stand { display: none; }
+
+body.beamer .klassementen {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  grid-template-columns: 1fr;
+  align-content: start;
+  overflow-y: auto;
+  min-height: 0;
+  gap: 12px;
+}
+
+body.beamer .klassement .kop { padding: 8px 12px; font-size: 16px; }
+body.beamer .klassement ol { padding: 2px 0; }
+body.beamer .klassement li { padding: 4px 12px; font-size: 14px; }
+
+body.beamer #historiepaneel,
+body.beamer .beheer { display: none; }
+
+#beamerKnop.aan { background: var(--zwart); color: var(--geel); }
+
 /* ===== Spelbeheer ===== */
 .beheer summary {
   cursor: pointer;
@@ -879,10 +976,11 @@ body.start-open { overflow: hidden; }
   <button class="primair" onclick="voegToe()">🍺 Bier invoeren</button>
   <div class="knoppen">
     <button class="klein" onclick="undo()">↩ Undo</button>
+    <button class="klein" id="beamerKnop" onclick="wisselBeamer()">📽 Beamer</button>
   </div>
 </section>
 
-<section class="paneel">
+<section class="paneel" id="kaartpaneel">
   <h2>🃏 Tour-kaarten</h2>
   <div class="kaartzone">
     <div class="stapelvak">
@@ -906,7 +1004,7 @@ body.start-open { overflow: hidden; }
 
 <section class="klassementen" id="ranking"></section>
 
-<section class="paneel">
+<section class="paneel" id="historiepaneel">
   <h2>📋 Historie</h2>
   <div class="historie-wrap">
     <table>
@@ -1083,14 +1181,29 @@ const OPSLAG = "bierTourData";
 /* Canvas op vaste logische maat, scherp op retina */
 const canvas = document.getElementById("grafiek");
 const ctx = canvas.getContext("2d");
-const B = 760, H = 460;
-const dpr = Math.max(1, window.devicePixelRatio || 1);
+const B = 760;
+let H = 460;          /* hoogte past zich aan op de beamer */
+const dpr = Math.max(2, window.devicePixelRatio || 1);   /* min. 2x: ook scherp op een beamer */
 canvas.width = B * dpr;
 canvas.height = H * dpr;
 ctx.scale(dpr, dpr);
 
+/* Op de beamer krijgt de grafiek de verhouding van de ruimte die er is */
+function maatGrafiek(){
+  let h = 460;
+  const vak = canvas.parentElement;
+  if (document.body.classList.contains("beamer") && vak.clientWidth && vak.clientHeight)
+    h = Math.round(Math.min(1000, Math.max(400, B * vak.clientHeight / vak.clientWidth)));
+  if (h === H) return;
+  H = h;
+  startY = H - 60;
+  canvas.height = H * dpr;
+  canvas.width = B * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
 const startX = 58;
-const startY = 400;
+let startY = 400;
 const eindX = B - 40;
 const topY = 40;
 
@@ -1385,6 +1498,7 @@ function animatieFrame(nu){
 }
 
 function tekenGrafiek(w, t, extra){
+  maatGrafiek();
   const spelers = data.spelers;
   ctx.clearRect(0,0,B,H);
   tekenAchtergrond();
@@ -1910,6 +2024,7 @@ function voegToe(){
 
 /* Scroll naar de grafiek en laat de fiets pas klimmen als die in beeld is */
 function naarGrafiek(){
+  if (document.body.classList.contains("beamer")) return;   /* grafiek staat altijd in beeld */
   const g = document.getElementById("grafiek").getBoundingClientRect();
   const inBeeld = g.top >= 0 && g.bottom <= innerHeight;
   if (inBeeld) return;
@@ -2095,6 +2210,49 @@ function tekenSprint(){
   }[f];
 }
 
+/* ================= BEAMER ================= */
+/* Ontworpen voor 1366x768 en daarna geschaald naar het echte scherm,
+   zodat tekst op elke beamer even groot oogt en niets hoeft te scrollen. */
+const BEAMER_B = 1366, BEAMER_H = 768;
+
+function schaalBeamer(){
+  const b = document.body;
+  if (!b.classList.contains("beamer")){
+    b.style.zoom = "";
+    b.style.removeProperty("--hoogte");
+    return;
+  }
+  const f = Math.min(innerWidth / BEAMER_B, innerHeight / BEAMER_H);
+  b.style.zoom = f;
+  b.style.setProperty("--hoogte", (innerHeight / f) + "px");
+}
+
+function zetBeamer(aan){
+  document.body.classList.toggle("beamer", aan);
+  document.getElementById("beamerKnop").classList.toggle("aan", aan);
+  /* actieve kaarten: op de beamer onder de grafiek, anders bij de kaarten */
+  const eff = document.getElementById("effecten");
+  (aan ? document.querySelector(".grafiekpaneel") : document.getElementById("kaartpaneel")).appendChild(eff);
+  try { localStorage.setItem(OPSLAG+"Beamer", aan ? "1" : ""); } catch(e) {}
+  window.scrollTo(0, 0);
+  schaalBeamer();
+  if (typeof weergave !== "undefined" && weergave) tekenGrafiek(weergave, 1, null);
+}
+
+function wisselBeamer(){
+  const aan = !document.body.classList.contains("beamer");
+  zetBeamer(aan);
+  try {
+    if (aan && !document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    if (!aan && document.fullscreenElement) document.exitFullscreen?.();
+  } catch(e) {}
+}
+
+addEventListener("resize", ()=>{
+  schaalBeamer();
+  if (weergave && !animatie) tekenGrafiek(weergave, 1, null);
+});
+
 /* ================= STARTSCHERM ================= */
 let startLijst = [];
 const MAX_SPELERS = KLEUREN.length;
@@ -2210,6 +2368,8 @@ if (!data.gestart && data.log.length) data.gestart = true;
 const jaar = "'" + String(new Date().getFullYear()).slice(-2);
 document.querySelectorAll(".jaar").forEach(el=>{ el.textContent = jaar; });
 document.title = `Speciaalbierdag TDF-editie ${jaar}`;
+
+try { if (localStorage.getItem(OPSLAG+"Beamer")) zetBeamer(true); } catch(e) {}
 
 vulSelect();
 verwerkTijd();
