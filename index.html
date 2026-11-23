@@ -546,6 +546,133 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .melding.aan { opacity: 1; transform: translate(-50%, 0); }
 
+/* ===== Startscherm ===== */
+#startscherm {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: var(--achtergrond);
+  overflow-y: auto;
+  display: none;
+}
+
+#startscherm.open { display: block; }
+
+body.start-open { overflow: hidden; }
+
+.start-inhoud {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+.start-inhoud .paneel { margin-top: 20px; }
+
+.start-uitleg {
+  color: var(--zacht);
+  font-size: 14px;
+  margin: -4px 0 14px;
+}
+
+.toevoegen {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.renners {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  counter-reset: renner;
+}
+
+.renners li {
+  display: grid;
+  grid-template-columns: 26px 14px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 4px;
+  border-bottom: 1px solid var(--rand);
+  animation: erbij .25s ease-out;
+}
+
+@keyframes erbij {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.renners li::before {
+  counter-increment: renner;
+  content: counter(renner);
+  font-family: Oswald, Arial, sans-serif;
+  color: var(--zacht);
+  text-align: right;
+}
+
+.renners input {
+  padding: 8px 10px;
+  border-color: transparent;
+  background: transparent;
+  font-weight: 600;
+}
+
+.renners input:hover { border-color: var(--rand); }
+.renners input:focus { border-color: var(--zwart); background: #fff; }
+
+.renners .rijknoppen { display: flex; gap: 4px; }
+
+.renners .rijknoppen button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 14px;
+  border-width: 1px;
+  border-color: var(--rand);
+  box-shadow: none;
+}
+
+.renners .rijknoppen button:disabled { opacity: .3; cursor: default; }
+
+.renners-leeg {
+  color: var(--zacht);
+  text-align: center;
+  padding: 20px;
+  border: 2px dashed var(--rand);
+  border-radius: 10px;
+}
+
+.start-onder {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.startknop {
+  font-family: Oswald, Arial, sans-serif;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  font-size: 20px;
+  padding: 14px 22px;
+  flex: 1;
+}
+
+.startknop:disabled { opacity: .4; cursor: default; }
+
+.start-waarschuwing {
+  background: #fff1f0;
+  border: 1px solid #f3b7b2;
+  color: #9b1c14;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 14px;
+  margin-bottom: 14px;
+}
+
 #confetti {
   position: fixed;
   inset: 0;
@@ -621,6 +748,35 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 </section>
 
 </main>
+
+<div id="startscherm">
+  <header>
+    <div class="sub">Inschrijving peloton</div>
+    <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie '25</h1>
+  </header>
+  <div class="start-inhoud">
+    <div class="paneel">
+      <h2>🚴 Wie rijden er mee?</h2>
+      <p class="start-uitleg">Zet de renners in tafelvolgorde, met de klok mee. Dat bepaalt wie links en rechts van je zit bij de kaarten.</p>
+      <div class="start-waarschuwing" id="startWaarschuwing" hidden>
+        ⚠️ Er loopt al een spel. Als je opnieuw start, begint iedereen weer bij 0.
+      </div>
+      <div class="toevoegen">
+        <input type="text" id="nieuweRenner" placeholder="Naam van een renner" maxlength="24" autocomplete="off">
+        <button onclick="rennerToevoegen()">＋ Toevoegen</button>
+      </div>
+      <ul class="renners" id="renners"></ul>
+      <div class="start-onder">
+        <button class="klein ghost" onclick="startLijst=[];tekenStartLijst()">Lijst leegmaken</button>
+        <span class="stapelinfo" id="aantalRenners"></span>
+      </div>
+      <div class="start-onder">
+        <button class="ghost" id="terugKnop" onclick="sluitStart()" hidden>← Terug naar spel</button>
+        <button class="primair startknop" id="startKnop" onclick="startSpel()">🏁 Start de Tour</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <canvas id="confetti"></canvas>
 <div class="melding" id="melding"></div>
@@ -1374,28 +1530,121 @@ function resetGame(){
   teken();
 }
 
-function spelersAanpassen(){
-  const invoer = prompt(
-    "Spelers in tafelvolgorde (met de klok mee), gescheiden door komma's.\nLet op: dit reset het spel!",
-    data.namen.join(", ")
-  );
-  if (invoer === null) return;
-  const namen = [...new Set(invoer.split(",").map(n=>n.trim()).filter(Boolean))];
-  if (namen.length < 2){ melding("Minimaal 2 spelers"); return; }
-  data = nieuweData(namen);
+/* ================= STARTSCHERM ================= */
+let startLijst = [];
+const MAX_SPELERS = KLEUREN.length;
+
+const escape = t => t.replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function spelLoopt(){
+  return data.gestart && (data.log.length > 0 || Object.values(data.spelers).some(s=>s.groen));
+}
+
+function openStart(){
+  startLijst = [...data.namen];
+  document.getElementById("startWaarschuwing").hidden = !spelLoopt();
+  document.getElementById("terugKnop").hidden = !data.gestart;
+  document.getElementById("startscherm").classList.add("open");
+  document.body.classList.add("start-open");
+  tekenStartLijst();
+  document.getElementById("startscherm").scrollTop = 0;
+  document.getElementById("nieuweRenner").value = "";
+  document.getElementById("nieuweRenner").focus();
+}
+
+function sluitStart(){
+  document.getElementById("startscherm").classList.remove("open");
+  document.body.classList.remove("start-open");
+}
+
+function tekenStartLijst(){
+  const ul = document.getElementById("renners");
+  if (!startLijst.length){
+    ul.innerHTML = `<li class="renners-leeg" style="display:block">Nog geen renners. Voeg er hierboven een toe.</li>`;
+  } else {
+    ul.innerHTML = startLijst.map((n,i)=>`
+      <li>
+        <span class="stip" style="background:${KLEUREN[i % KLEUREN.length]}"></span>
+        <input value="${escape(n)}" maxlength="24" aria-label="Naam renner ${i+1}"
+          onchange="hernoemRenner(${i}, this.value)">
+        <span class="rijknoppen">
+          <button title="Omhoog" onclick="verplaatsRenner(${i},-1)" ${i===0?"disabled":""}>↑</button>
+          <button title="Omlaag" onclick="verplaatsRenner(${i},1)" ${i===startLijst.length-1?"disabled":""}>↓</button>
+          <button title="Verwijderen" onclick="verwijderRenner(${i})">✕</button>
+        </span>
+      </li>`).join("");
+  }
+  const genoeg = startLijst.length >= 2;
+  document.getElementById("startKnop").disabled = !genoeg;
+  document.getElementById("aantalRenners").innerText =
+    `${startLijst.length} renner${startLijst.length===1?"":"s"}` + (genoeg ? "" : " · minimaal 2 nodig");
+}
+
+function rennerToevoegen(){
+  const veld = document.getElementById("nieuweRenner");
+  const naam = veld.value.trim();
+  if (!naam) return;
+  if (startLijst.some(n=>n.toLowerCase()===naam.toLowerCase())){ melding(`${naam} staat er al in`); return; }
+  if (startLijst.length >= MAX_SPELERS){ melding(`Maximaal ${MAX_SPELERS} renners`); return; }
+  startLijst.push(naam);
+  veld.value = "";
+  veld.focus();
+  tekenStartLijst();
+}
+
+function hernoemRenner(i, naam){
+  naam = naam.trim();
+  if (!naam || startLijst.some((n,j)=>j!==i && n.toLowerCase()===naam.toLowerCase())){
+    melding(naam ? `${naam} staat er al in` : "Naam mag niet leeg zijn");
+  } else {
+    startLijst[i] = naam;
+  }
+  tekenStartLijst();
+}
+
+function verplaatsRenner(i, richting){
+  const j = i + richting;
+  [startLijst[i], startLijst[j]] = [startLijst[j], startLijst[i]];
+  tekenStartLijst();
+}
+
+function verwijderRenner(i){
+  startLijst.splice(i,1);
+  tekenStartLijst();
+}
+
+function startSpel(){
+  if (startLijst.length < 2) return;
+  if (spelLoopt() && !confirm("Het huidige spel wordt gewist. Opnieuw starten?")) return;
+  data = nieuweData([...startLijst]);
+  data.gestart = true;
   undoStapel = [];
   opslaan();
   vulSelect();
   teken();
+  sluitStart();
+  melding("De Tour is begonnen! 🏁");
 }
+
+function spelersAanpassen(){
+  openStart();
+}
+
+document.getElementById("nieuweRenner").addEventListener("keydown", e=>{
+  if (e.key === "Enter") rennerToevoegen();
+});
 
 document.getElementById("percentage").addEventListener("keydown", e=>{
   if (e.key === "Enter") voegToe();
 });
 
+/* Bestaande spellen van voor het startscherm tellen als gestart */
+if (!data.gestart && data.log.length) data.gestart = true;
+
 vulSelect();
 verwerkTijd();
 teken();
+if (!data.gestart) openStart();
 document.fonts?.ready.then(teken);
 </script>
 
