@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Speciaalbierdag TDF-editie '25</title>
+
+<style>
+:root {
+  --geel: #ffd600;
+  --groen: #2e7d32;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: Arial, sans-serif;
+  background: #dde5ec;
+  text-align: center;
+  margin: 0;
+  padding: 0 12px 40px;
+}
+
+h1 { margin: 16px 0 8px; }
+
+canvas {
+  background: #cfe9ff;
+  border: 2px solid #333;
+  border-radius: 10px;
+  margin: 10px auto;
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+input, select, button {
+  font-size: 16px;
+  padding: 6px;
+  margin: 5px;
+}
+
+button { cursor: pointer; }
+
+.paneel {
+  background: #fff;
+  border-radius: 10px;
+  padding: 12px;
+  margin: 12px auto;
+  max-width: 900px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+
+table {
+  margin: 10px auto;
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+}
+
+th, td {
+  border: 1px solid #999;
+  padding: 6px 10px;
+}
+
+th { background: #f0f0f0; }
+
+.ranking {
+  text-align: left;
+  font-size: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  justify-content: center;
+}
+
+.ranking > div { min-width: 260px; }
+
+/* ===== Kaarten ===== */
+.trekknop {
+  font-size: 20px;
+  padding: 12px 24px;
+  background: var(--geel);
+  border: 2px solid #333;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+.kaart {
+  display: none;
+  max-width: 420px;
+  margin: 12px auto;
+  padding: 20px;
+  border: 4px solid #333;
+  border-radius: 14px;
+  background: linear-gradient(160deg, #fffbe0, #ffe97a);
+  animation: draai .5s ease-out;
+}
+
+.kaart.zichtbaar { display: block; }
+
+@keyframes draai {
+  from { transform: rotateY(90deg); opacity: 0; }
+  to   { transform: rotateY(0);     opacity: 1; }
+}
+
+.kaart .titel { font-size: 24px; font-weight: bold; margin-bottom: 6px; }
+.kaart .voor  { font-size: 14px; color: #555; margin-bottom: 10px; }
+.kaart .tekst { font-size: 18px; margin-bottom: 14px; }
+.kaart .acties select { max-width: 180px; }
+
+.stapel { font-size: 14px; color: #555; }
+
+/* ===== Badges ===== */
+.badge {
+  display: inline-block;
+  background: #eee;
+  border: 1px solid #aaa;
+  border-radius: 12px;
+  padding: 2px 8px;
+  margin: 2px;
+  font-size: 13px;
+}
+
+.badge button {
+  font-size: 12px;
+  padding: 0 4px;
+  margin: 0 0 0 4px;
+}
+
+#effecten { text-align: left; }
+#effecten .rij { margin: 4px 0; }
+
+.melding {
+  position: fixed;
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+  background: #333;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+  max-width: 90%;
+}
+
+.melding.aan { opacity: 1; }
+
+#confetti {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  pointer-events: none;
+}
+</style>
+</head>
+
+<body>
+
+<h1>🍺 Speciaalbierdag TDF-editie '25 🚴</h1>
+
+<div class="paneel">
+  <select id="speler"></select>
+  <input type="number" id="percentage" step="0.1" placeholder="Alcohol % van je bier">
+  <button onclick="voegToe()">🍺 Bier invoeren</button>
+  <button onclick="undo()">↩ Undo</button>
+  <button onclick="resetGame()">🗑 Reset</button>
+  <button onclick="spelersAanpassen()">👥 Spelers</button>
+</div>
+
+<div class="paneel">
+  <button class="trekknop" onclick="trekKaart()">🃏 Trek een Tour-kaart</button>
+  <div class="stapel" id="stapel"></div>
+  <div class="kaart" id="kaart"></div>
+  <div id="effecten"></div>
+</div>
+
+<canvas id="grafiek" width="740" height="480"></canvas>
+<p id="stats"></p>
+
+<div class="paneel ranking" id="ranking"></div>
+
+<div class="paneel">
+  <h2>📋 Historie</h2>
+  <table>
+  <thead>
+  <tr>
+    <th>#</th>
+    <th>Speler</th>
+    <th>Biertje</th>
+    <th>Wat</th>
+    <th>%</th>
+    <th>Totaal %</th>
+  </tr>
+  </thead>
+  <tbody id="historieTabel"></tbody>
+  </table>
+</div>
+
+<canvas id="confetti"></canvas>
+<div class="melding" id="melding"></div>
+
+<script>
+/* ================= CONSTANTEN ================= */
+const STANDAARD_SPELERS = [
+  "Lukas","Panlat","Richard","Japi","Peter",
+  "Chin","Stifler","Sweba","Willy","Ta-DJ Pogabar"
+];
+
+const KLEUREN = [
+  "#e53935","#1e88e5","#43a047","#fb8c00","#8e24aa",
+  "#00897b","#6d4c41","#3949ab","#f4511e","#c0ca33",
+  "#d81b60","#5e35b1","#039be5","#7cb342","#ffb300"
+];
+
+/*
+  Kaarttypes:
+  - pct:        direct +/- % voor de trekker
+  - buren:      direct % voor trekker + gekozen buren (links / rechts)
+  - koploper:   direct % voor de huidige koploper
+  - volgende:   modifier op het volgende biertje van de trekker
+  - dubbel:     volgende biertje telt dubbel
+  - opdracht:   iets eten/doen voordat je verder mag drinken
+  - sprint:     tussensprint, punten voor de groene trui
+  - knecht:     gekozen ploegmaat drinkt volgende bier voor jou
+  - wiel:       10 min: elk bier van een ander geeft jou +1%
+  - kopoverkop: jij + ploegmaat volgende bier +1,5%
+  - leegloper:  direct -1%, daarna elke 5 min -1% tijdens je volgende bier
+*/
+const KAARTEN = [
+  { n:1, titel:"Valpartij", tekst:"Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2 },
+  { n:2, titel:"Massale valpartij", tekst:"-2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:3, titel:"Chasse patate", tekst:"Eet een bakje patatchips op voordat je verder mag drinken.", type:"opdracht", label:"🍟 chips eten" },
+  { n:3, titel:"Pepernoot in de band", tekst:"Eet een bakje pepernoten op voordat je verder mag drinken.", type:"opdracht", label:"🍪 pepernoten eten" },
+  { n:3, titel:"Plakbidonnetje", tekst:"Drink je volgende biertje uit een bidon, en dan +2%.", type:"volgende", waarde:2, label:"bidon" },
+  { n:1, titel:"Dopingshot", tekst:"Neem een shotje. Als beloning telt je volgende biertje dubbel (geen % voor het shotje).", type:"dubbel" },
+  { n:3, titel:"Tussensprint", tekst:"Wie nu als eerste zijn biertje op heeft krijgt punten voor de groene trui. 1e: 5 pt, 2e: 3 pt, 3e: 1 pt.", type:"sprint" },
+  { n:1, titel:"Leegloper", tekst:"Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
+  { n:3, titel:"Knecht", tekst:"Wijs iemand aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, titel:"Linkeballen", tekst:"10 minuutjes in het wiel uitrusten. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
+  { n:1, titel:"Kop over kop", tekst:"Kies een ploegmaat. Jullie drinken het volgende biertje tegelijk (gezamenlijke slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
+  { n:1, titel:"Op kop in de wind", tekst:"De koploper fietst alleen in de wind tegen het peloton: -2,5% voor de koploper.", type:"koploper", waarde:-2.5 },
+  { n:2, titel:"Gelletje", tekst:"+2% voor jou en degene links van je.", type:"buren", waarde:2, links:true },
+  { n:1, titel:"Wieltjeszuiger", tekst:"Je bent een wieltjeszuiger. +1%", type:"pct", waarde:1 },
+  { n:1, titel:"Prikkeldraad", tekst:"Je bent in het prikkeldraad gefietst. -2%", type:"pct", waarde:-2 },
+  { n:1, titel:"Tom Dumoulin", tekst:"Je moet poepen en loopt daardoor achterstand op. -2%", type:"pct", waarde:-2 },
+  { n:3, titel:"Afdaling", tekst:"Je zit in een afdaling, door het krantje blijf je lekker warm. +1%", type:"pct", waarde:1 },
+  { n:1, titel:"Waaier (verkeerde kant)", tekst:"Je zit aan de verkeerde kant van de waaier. -2%", type:"pct", waarde:-2 },
+  { n:1, titel:"Waaier (goede kant)", tekst:"Je zit aan de goede kant van de waaier. +2%", type:"pct", waarde:2 },
+  { n:1, titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn. -2%", type:"pct", waarde:-2 },
+  { n:1, titel:"Koffiemolen", tekst:"Koffiemolen, dit schiet niet op... -2%", type:"pct", waarde:-2 },
+  { n:1, titel:"Mooie demarrage", tekst:"Mooie demarrage! +2%", type:"pct", waarde:2 },
+  { n:1, titel:"Mart Smeets", tekst:"Je zeurt net zoals Mart Smeets. -1%", type:"pct", waarde:-1 },
+  { n:2, titel:"Lossen", tekst:"Je moet lossen. -2%", type:"pct", waarde:-2 },
+  { n:1, titel:"Gat dichtrijden", tekst:"Je rijdt het gat naar de kopgroep dicht. +2%", type:"pct", waarde:2 },
+  { n:1, titel:"Geparkeerd", tekst:"Je staat geparkeerd. -1%", type:"pct", waarde:-1 },
+  { n:1, titel:"Man met de hamer", tekst:"Je komt de man met de hamer tegen. -1%", type:"pct", waarde:-1 },
+  { n:1, titel:"De dood of de gladiolen", tekst:"De dood of de gladiolen! +1%", type:"pct", waarde:1 }
+];
+
+const WIEL_DUUR = 10 * 60 * 1000;
+const LEEGLOOP_INTERVAL = 5 * 60 * 1000;
+const OPSLAG = "bierTourData";
+
+const canvas = document.getElementById("grafiek");
+const ctx = canvas.getContext("2d");
+
+const startX = 70;
+const startY = 420;
+
+/* ================= DATA ================= */
+function nieuweSpeler(i){
+  return {
+    kleur: KLEUREN[i % KLEUREN.length],
+    bier: 0,
+    pct: 0,
+    groen: 0,
+    punten: [{ bier:0, pct:0 }],
+    heeftConfetti: false
+  };
+}
+
+function nieuweStapel(){
+  const stapel = [];
+  KAARTEN.forEach((k,i)=>{ for(let j=0;j<k.n;j++) stapel.push(i); });
+  for(let i=stapel.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [stapel[i],stapel[j]] = [stapel[j],stapel[i]];
+  }
+  return stapel;
+}
+
+function nieuweData(namen){
+  const d = { namen, spelers:{}, log:[], stapel:nieuweStapel(), effecten:[], huidigeKaart:null };
+  namen.forEach((n,i)=>{ d.spelers[n] = nieuweSpeler(i); });
+  return d;
+}
+
+let data;
+try { data = JSON.parse(localStorage.getItem(OPSLAG)); } catch(e) { data = null; }
+if (!data || !data.namen || !data.spelers) data = nieuweData([...STANDAARD_SPELERS]);
+
+let undoStapel = [];
+try { undoStapel = JSON.parse(localStorage.getItem(OPSLAG+"Undo")) || []; } catch(e) {}
+
+function opslaan(){
+  try {
+    localStorage.setItem(OPSLAG, JSON.stringify(data));
+    localStorage.setItem(OPSLAG+"Undo", JSON.stringify(undoStapel.slice(-50)));
+  } catch(e) {}
+}
+
+function snapshot(){
+  undoStapel.push(JSON.stringify(data));
+  if (undoStapel.length > 50) undoStapel.shift();
+}
+
+const sp = naam => data.spelers[naam];
+const select = document.getElementById("speler");
+
+function vulSelect(){
+  const huidig = select.value;
+  select.innerHTML = "";
+  data.namen.forEach(n=>{
+    const o = document.createElement("option");
+    o.value = n;
+    o.innerText = n;
+    select.appendChild(o);
+  });
+  if (data.namen.includes(huidig)) select.value = huidig;
+}
+
+/* Tafelvolgorde = volgorde van de spelerslijst (rond) */
+function links(naam){
+  const i = data.namen.indexOf(naam);
+  return data.namen[(i - 1 + data.namen.length) % data.namen.length];
+}
+function rechts(naam){
+  const i = data.namen.indexOf(naam);
+  return data.namen[(i + 1) % data.namen.length];
+}
+
+function melding(tekst){
+  const m = document.getElementById("melding");
+  m.innerText = tekst;
+  m.classList.add("aan");
+  clearTimeout(melding.t);
+  melding.t = setTimeout(()=>m.classList.remove("aan"), 3500);
+}
+
+const fmt = v => (v>0?"+":"") + v.toFixed(1) + "%";
+
+/* ================= PUNTEN ================= */
+/* Bonus/straf zonder extra biertje */
+function geefPct(naam, waarde, wat){
+  const s = sp(naam);
+  s.pct += waarde;
+  s.punten.push({ bier:s.bier, pct:s.pct });
+  data.log.push({ speler:naam, bier:s.bier, wat, waarde, totaal:s.pct });
+}
+
+/* ================= ACHTERGROND (BERGEN) ================= */
+function tekenBergen(){
+  ctx.beginPath();
+  ctx.moveTo(40, startY);
+  ctx.lineTo(230, 180);
+  ctx.lineTo(420, startY);
+  ctx.closePath();
+  ctx.fillStyle = "#8bc34a";
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.moveTo(330, startY);
+  ctx.lineTo(560, 120);
+  ctx.lineTo(720, startY);
+  ctx.closePath();
+  ctx.fillStyle = "#7cb342";
+  ctx.fill();
+}
+
+/* ================= CONFETTI ================= */
+function confetti(){
+  const c = document.getElementById("confetti");
+  const cx = c.getContext("2d");
+  c.width = innerWidth;
+  c.height = innerHeight;
+  const deeltjes = Array.from({length:150}, ()=>({
+    x: Math.random()*c.width,
+    y: -Math.random()*c.height,
+    v: 2 + Math.random()*4,
+    k: `hsl(${Math.random()*360},100%,50%)`
+  }));
+  let frames = 0;
+  (function stap(){
+    cx.clearRect(0,0,c.width,c.height);
+    deeltjes.forEach(d=>{
+      d.y += d.v;
+      d.x += Math.sin((d.y+frames)/30);
+      cx.fillStyle = d.k;
+      cx.fillRect(d.x, d.y, 6, 6);
+    });
+    if (++frames < 220) requestAnimationFrame(stap);
+    else cx.clearRect(0,0,c.width,c.height);
+  })();
+}
+
+/* ================= TEKEN ================= */
+function teken(){
+  const spelers = data.spelers;
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  tekenBergen();
+
+  const mb = Math.max(...Object.values(spelers).map(s=>s.bier), 5) * 1.1;
+  const mp = Math.max(...Object.values(spelers).map(s=>s.pct), 10) * 1.1;
+  const schaalX = b => startX + (b/mb) * 620;
+  const schaalY = p => startY - (p/mp) * 350;
+  const hoogste = Math.max(...Object.values(spelers).map(s=>s.pct));
+
+  /* assen */
+  ctx.beginPath();
+  ctx.moveTo(startX,40);
+  ctx.lineTo(startX,startY);
+  ctx.lineTo(720,startY);
+  ctx.strokeStyle="#000";
+  ctx.lineWidth=2;
+  ctx.stroke();
+
+  ctx.fillStyle="#000";
+  ctx.font="13px Arial";
+
+  /* Y ticks */
+  for(let i=0;i<=5;i++){
+    const v=(i/5)*mp;
+    const y=schaalY(v);
+    ctx.fillText(v.toFixed(1)+"%", startX-50, y+4);
+    ctx.beginPath();
+    ctx.moveTo(startX-4,y);
+    ctx.lineTo(startX+4,y);
+    ctx.stroke();
+  }
+
+  /* X ticks */
+  for(let i=0;i<=5;i++){
+    const v=(i/5)*mb;
+    const x=schaalX(v);
+    ctx.fillText(Math.round(v)+"🍺", x-10, startY+20);
+    ctx.beginPath();
+    ctx.moveTo(x,startY-4);
+    ctx.lineTo(x,startY+4);
+    ctx.stroke();
+  }
+
+  let nieuweConfetti = false;
+
+  Object.entries(spelers).forEach(([naam,s])=>{
+    ctx.beginPath();
+    s.punten.forEach((p,i)=>{
+      const x=schaalX(p.bier);
+      const y=schaalY(p.pct);
+      i?ctx.lineTo(x,y):ctx.moveTo(x,y);
+    });
+    ctx.strokeStyle=s.kleur;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    const l=s.punten.at(-1);
+    const x=schaalX(l.bier);
+    const y=schaalY(l.pct);
+
+    /* fietsje gespiegeld */
+    ctx.save();
+    ctx.translate(x+10,y);
+    ctx.scale(-1,1);
+    ctx.font="22px Arial";
+    ctx.fillText("🚴",0,0);
+    ctx.restore();
+
+    /* naam + gele trui */
+    ctx.font="14px Arial";
+    ctx.fillStyle=s.kleur;
+    ctx.fillText((s.pct===hoogste && hoogste>0?"🟡 ":"")+naam, x-15, y-22);
+    ctx.fillStyle="#000";
+
+    /* confetti bij 35% */
+    if(s.pct>=35 && !s.heeftConfetti){
+      s.heeftConfetti=true;
+      nieuweConfetti = true;
+    }
+  });
+
+  if (nieuweConfetti){ confetti(); opslaan(); }
+
+  document.getElementById("stats").innerHTML =
+    Object.entries(spelers)
+      .map(([n,s])=>`${s.pct===hoogste && hoogste>0?"🟡":""}${n}: ${s.bier} 🍺 / ${s.pct.toFixed(1)}%`)
+      .join(" | ");
+
+  tekenTabel();
+  tekenRanking();
+  tekenEffecten();
+  tekenKaart();
+  document.getElementById("stapel").innerText =
+    `Nog ${data.stapel.length} kaarten in de stapel`;
+}
+
+/* ================= TABEL & RANKING ================= */
+function tekenTabel(){
+  const tb=document.getElementById("historieTabel");
+  tb.innerHTML = data.log.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${r.speler}</td>
+        <td>${r.bier}</td>
+        <td>${r.wat || "🍺 biertje"}</td>
+        <td>${fmt(r.waarde)}</td>
+        <td>${r.totaal.toFixed(1)}%</td>
+      </tr>`).reverse().join("");
+}
+
+function tekenRanking(){
+  const r=document.getElementById("ranking");
+  const geel=Object.entries(data.spelers).sort((a,b)=>b[1].pct-a[1].pct);
+  const groen=Object.entries(data.spelers).sort((a,b)=>b[1].groen-a[1].groen);
+  r.innerHTML =
+    "<div><strong>🟡 Gele trui (alcohol %)</strong><br>" +
+    geel.map(([n,p],i)=>`${i+1}. ${i===0&&p.pct>0?"🟡 ":""}${n} – ${p.pct.toFixed(1)}% (${p.bier} 🍺)`).join("<br>") +
+    "</div><div><strong>🟢 Groene trui (sprintpunten)</strong><br>" +
+    groen.map(([n,p],i)=>`${i+1}. ${i===0&&p.groen>0?"🟢 ":""}${n} – ${p.groen} pt`).join("<br>") +
+    "</div>";
+}
+
+/* ================= EFFECTEN ================= */
+function effectTekst(e){
+  switch(e.type){
+    case "volgende":   return `${e.speler}: volgende bier ${fmt(e.waarde)}${e.label?` (${e.label})`:""}`;
+    case "dubbel":     return `${e.speler}: volgende bier telt dubbel 💉`;
+    case "opdracht":   return `${e.speler}: eerst ${e.label}!`;
+    case "knecht":     return `${e.knecht} is knecht van ${e.speler}: volgende bier telt voor ${e.speler}`;
+    case "kopoverkop": return `${e.speler}: kop over kop met ${e.maat}, volgende bier ${fmt(e.waarde)}`;
+    case "leegloper":  return `${e.speler}: leegloper 🫗 (elke 5 min -1% tot volgende bier)`;
+    case "wiel": {
+      const rest = Math.max(0, Math.ceil((e.tot - Date.now())/60000));
+      return `${e.speler} zit in het wiel 😴 nog ${rest} min (+1% per leeg bier van een ander)`;
+    }
+  }
+  return "";
+}
+
+function tekenEffecten(){
+  const el = document.getElementById("effecten");
+  if (!data.effecten.length){ el.innerHTML = ""; return; }
+  el.innerHTML = "<strong>Actieve kaarten:</strong>" + data.effecten.map((e,i)=>
+    `<div class="rij"><span class="badge">${effectTekst(e)}
+      <button title="Klaar / verwijderen" onclick="verwijderEffect(${i})">✓</button></span></div>`
+  ).join("");
+}
+
+function verwijderEffect(i){
+  snapshot();
+  data.effecten.splice(i,1);
+  opslaan();
+  teken();
+}
+
+/* Wiel-timers en leegloop-ticks bijwerken */
+function verwerkTijd(){
+  const nu = Date.now();
+  let veranderd = false;
+  data.effecten.forEach(e=>{
+    if (e.type==="leegloper"){
+      while (nu - e.laatste >= LEEGLOOP_INTERVAL){
+        e.laatste += LEEGLOOP_INTERVAL;
+        geefPct(e.speler, -1, "🫗 leegloper");
+        veranderd = true;
+      }
+    }
+  });
+  const voor = data.effecten.length;
+  data.effecten = data.effecten.filter(e=>!(e.type==="wiel" && e.tot <= nu));
+  if (data.effecten.length !== voor) veranderd = true;
+  if (veranderd){ opslaan(); teken(); }
+  else tekenEffecten();
+}
+setInterval(verwerkTijd, 15000);
+
+/* ================= KAARTEN ================= */
+function trekKaart(){
+  snapshot();
+  if (!data.stapel.length){
+    data.stapel = nieuweStapel();
+    melding("Stapel is opnieuw geschud 🔀");
+  }
+  data.huidigeKaart = { index: data.stapel.pop(), speler: select.value, toegepast: false };
+  opslaan();
+  teken();
+}
+
+function opties(uitsluiten, standaard){
+  return data.namen.filter(n=>!uitsluiten.includes(n))
+    .map(n=>`<option ${n===standaard?"selected":""}>${n}</option>`).join("");
+}
+
+function tekenKaart(){
+  const el = document.getElementById("kaart");
+  const hk = data.huidigeKaart;
+  if (!hk){ el.classList.remove("zichtbaar"); return; }
+  const k = KAARTEN[hk.index];
+  const wie = hk.speler;
+  let acties = "";
+
+  if (hk.toegepast){
+    acties = `<em>✔ Verwerkt</em><br><button onclick="sluitKaart()">Sluiten</button>`;
+  } else switch(k.type){
+    case "buren":
+      acties =
+        (k.links ? `Links: <select id="kLinks">${opties([wie], links(wie))}</select>` : "") +
+        (k.rechts ? `<br>Rechts: <select id="kRechts">${opties([wie], rechts(wie))}</select>` : "") +
+        `<br><button onclick="pasToe()">Toepassen</button>`;
+      break;
+    case "koploper": {
+      const kop = Object.entries(data.spelers).sort((a,b)=>b[1].pct-a[1].pct)[0][0];
+      acties = `Koploper: <strong>${kop}</strong><br><button onclick="pasToe()">Toepassen</button>`;
+      break;
+    }
+    case "knecht":
+      acties = `Knecht: <select id="kMaat">${opties([wie])}</select><br><button onclick="pasToe()">Aanwijzen</button>`;
+      break;
+    case "kopoverkop":
+      acties = `Ploegmaat: <select id="kMaat">${opties([wie])}</select><br><button onclick="pasToe()">Kiezen</button>`;
+      break;
+    case "sprint": {
+      const s = (id,p)=>`${p}: <select id="${id}"><option value="">–</option>${opties([])}</select><br>`;
+      acties = s("kS1","🥇 5 pt") + s("kS2","🥈 3 pt") + s("kS3","🥉 1 pt") +
+        `<button onclick="pasToe()">Punten toekennen</button>`;
+      break;
+    }
+    default:
+      acties = `<button onclick="pasToe()">Toepassen</button>`;
+  }
+
+  el.innerHTML = `
+    <div class="titel">${k.titel}</div>
+    <div class="voor">getrokken door ${wie}</div>
+    <div class="tekst">${k.tekst}</div>
+    <div class="acties">${acties}</div>`;
+  if (!el.classList.contains("zichtbaar") || el.dataset.id !== String(data.log.length)+hk.index){
+    el.classList.remove("zichtbaar");
+    void el.offsetWidth;
+  }
+  el.dataset.id = String(data.log.length)+hk.index;
+  el.classList.add("zichtbaar");
+}
+
+function sluitKaart(){
+  data.huidigeKaart = null;
+  opslaan();
+  teken();
+}
+
+const waarde = id => document.getElementById(id)?.value;
+
+function pasToe(){
+  const hk = data.huidigeKaart;
+  const k = KAARTEN[hk.index];
+  const wie = hk.speler;
+  const wat = "🃏 " + k.titel;
+  snapshot();
+
+  switch(k.type){
+    case "pct":
+      geefPct(wie, k.waarde, wat);
+      break;
+    case "buren": {
+      const wie2 = new Set([wie]);
+      if (k.links) wie2.add(waarde("kLinks"));
+      if (k.rechts) wie2.add(waarde("kRechts"));
+      wie2.forEach(n=>geefPct(n, k.waarde, wat));
+      break;
+    }
+    case "koploper": {
+      const kop = Object.entries(data.spelers).sort((a,b)=>b[1].pct-a[1].pct)[0][0];
+      geefPct(kop, k.waarde, wat);
+      break;
+    }
+    case "volgende":
+      data.effecten.push({ type:"volgende", speler:wie, waarde:k.waarde, label:k.label || k.titel.toLowerCase() });
+      break;
+    case "dubbel":
+      data.effecten.push({ type:"dubbel", speler:wie });
+      break;
+    case "opdracht":
+      data.effecten.push({ type:"opdracht", speler:wie, label:k.label });
+      break;
+    case "knecht":
+      data.effecten.push({ type:"knecht", speler:wie, knecht:waarde("kMaat") });
+      break;
+    case "kopoverkop": {
+      const maat = waarde("kMaat");
+      data.effecten.push({ type:"kopoverkop", speler:wie, maat, waarde:k.waarde });
+      data.effecten.push({ type:"kopoverkop", speler:maat, maat:wie, waarde:k.waarde });
+      break;
+    }
+    case "wiel":
+      data.effecten.push({ type:"wiel", speler:wie, tot: Date.now() + WIEL_DUUR });
+      break;
+    case "leegloper":
+      geefPct(wie, -1, wat);
+      data.effecten.push({ type:"leegloper", speler:wie, laatste: Date.now() });
+      break;
+    case "sprint": {
+      const gekozen = [["kS1",5],["kS2",3],["kS3",1]]
+        .map(([id,pt])=>[waarde(id),pt]).filter(([n])=>n);
+      if (new Set(gekozen.map(g=>g[0])).size !== gekozen.length){
+        undoStapel.pop();
+        melding("Iedere renner mag maar één plek krijgen");
+        return;
+      }
+      gekozen.forEach(([n,pt])=>{ sp(n).groen += pt; });
+      melding("Groene trui punten toegekend 🟢");
+      break;
+    }
+  }
+
+  hk.toegepast = true;
+  opslaan();
+  teken();
+}
+
+/* ================= BIER INVOEREN ================= */
+function voegToe(){
+  const drinker=select.value;
+  let v=parseFloat(document.getElementById("percentage").value);
+  if(isNaN(v)) return;
+  snapshot();
+
+  const opdracht = data.effecten.find(e=>e.type==="opdracht" && e.speler===drinker);
+  if (opdracht) melding(`Let op: ${drinker} moest eerst ${opdracht.label}`);
+
+  /* Knecht: dit bier telt voor de kopman */
+  const knechtEffect = data.effecten.find(e=>e.type==="knecht" && e.knecht===drinker);
+  const ontvanger = knechtEffect ? knechtEffect.speler : drinker;
+
+  /* Modifiers van de ontvanger op het volgende bier */
+  const extra = [];
+  const mijn = data.effecten.filter(e=>e.speler===ontvanger &&
+    ["volgende","dubbel","kopoverkop","leegloper","opdracht"].includes(e.type));
+  if (mijn.some(e=>e.type==="dubbel")){ v *= 2; extra.push("💉 dubbel"); }
+  mijn.forEach(e=>{
+    if (e.type==="volgende" || e.type==="kopoverkop"){
+      v += e.waarde;
+      extra.push(`${fmt(e.waarde)} ${e.type==="kopoverkop"?"kop over kop":e.label}`);
+    }
+  });
+
+  /* Het bier zelf: drinker krijgt een biertje, ontvanger de % */
+  const s = sp(ontvanger);
+  if (knechtEffect){
+    sp(drinker).bier++;
+    sp(drinker).punten.push({ bier:sp(drinker).bier, pct:sp(drinker).pct });
+  } else {
+    s.bier++;
+  }
+  s.pct += v;
+  s.punten.push({ bier:s.bier, pct:s.pct });
+  data.log.push({
+    speler: ontvanger,
+    bier: s.bier,
+    wat: "🍺 biertje" + (knechtEffect?` (knecht ${drinker})`:"") + (extra.length?` [${extra.join(", ")}]`:""),
+    waarde: v,
+    totaal: s.pct
+  });
+
+  /* Verbruikte effecten opruimen */
+  data.effecten = data.effecten.filter(e=>!(
+    e === knechtEffect ||
+    (e.speler===ontvanger && ["volgende","dubbel","kopoverkop","leegloper","opdracht"].includes(e.type)) ||
+    (e.speler===drinker && e.type==="opdracht")
+  ));
+
+  /* In het wiel: anderen die uitrusten krijgen +1% */
+  data.effecten
+    .filter(e=>e.type==="wiel" && e.tot > Date.now() && e.speler!==drinker)
+    .forEach(e=>geefPct(e.speler, 1, `😴 in het wiel (${drinker})`));
+
+  document.getElementById("percentage").value="";
+  opslaan();
+  teken();
+}
+
+/* ================= OVERIG ================= */
+function undo(){
+  if(!undoStapel.length){ melding("Niks om ongedaan te maken"); return; }
+  data = JSON.parse(undoStapel.pop());
+  opslaan();
+  vulSelect();
+  teken();
+}
+
+function resetGame(){
+  if(!confirm("Alles resetten?")) return;
+  data = nieuweData(data.namen);
+  undoStapel = [];
+  opslaan();
+  teken();
+}
+
+function spelersAanpassen(){
+  const invoer = prompt(
+    "Spelers in tafelvolgorde (met de klok mee), gescheiden door komma's.\nLet op: dit reset het spel!",
+    data.namen.join(", ")
+  );
+  if (invoer === null) return;
+  const namen = [...new Set(invoer.split(",").map(n=>n.trim()).filter(Boolean))];
+  if (namen.length < 2){ melding("Minimaal 2 spelers"); return; }
+  data = nieuweData(namen);
+  undoStapel = [];
+  opslaan();
+  vulSelect();
+  teken();
+}
+
+document.getElementById("percentage").addEventListener("keydown", e=>{
+  if (e.key === "Enter") voegToe();
+});
+
+vulSelect();
+verwerkTijd();
+teken();
+</script>
+
+</body>
+</html>
