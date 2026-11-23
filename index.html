@@ -546,6 +546,27 @@ td.num { text-align: right; font-variant-numeric: tabular-nums; }
 
 .melding.aan { opacity: 1; transform: translate(-50%, 0); }
 
+/* ===== Spelbeheer ===== */
+.beheer summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--zacht);
+}
+
+.beheer[open] summary { margin-bottom: 10px; }
+
+.beheerknoppen {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+button.gevaar {
+  border-color: var(--rood);
+  color: var(--rood);
+  box-shadow: 0 2px 0 var(--rood);
+}
+
 /* ===== Startscherm ===== */
 #startscherm {
   position: fixed;
@@ -847,7 +868,7 @@ body.start-open { overflow: hidden; }
 
 <header>
   <div class="sub">Etappe door het speciaalbierland</div>
-  <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie '25</h1>
+  <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie <span class="jaar">'25</span></h1>
 </header>
 
 <main>
@@ -858,8 +879,6 @@ body.start-open { overflow: hidden; }
   <button class="primair" onclick="voegToe()">🍺 Bier invoeren</button>
   <div class="knoppen">
     <button class="klein" onclick="undo()">↩ Undo</button>
-    <button class="klein" onclick="spelersAanpassen()">👥 Spelers</button>
-    <button class="klein ghost" onclick="resetGame()">🗑 Reset</button>
   </div>
 </section>
 
@@ -906,12 +925,21 @@ body.start-open { overflow: hidden; }
   </div>
 </section>
 
+<details class="paneel beheer">
+  <summary>⚙️ Spelbeheer</summary>
+  <p class="start-uitleg">Hier pas je de renners aan of begin je opnieuw. Per ongeluk gedrukt? Met ↩ Undo zet je het terug.</p>
+  <div class="beheerknoppen">
+    <button class="klein" onclick="spelersAanpassen()">👥 Renners aanpassen</button>
+    <button class="klein gevaar" onclick="resetGame()">🗑 Stand op 0 zetten</button>
+  </div>
+</details>
+
 </main>
 
 <div id="startscherm">
   <header>
     <div class="sub">Inschrijving peloton</div>
-    <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie '25</h1>
+    <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie <span class="jaar">'25</span></h1>
   </header>
   <div class="start-inhoud">
     <div class="paneel">
@@ -1899,9 +1927,10 @@ function undo(){
 }
 
 function resetGame(){
-  if(!confirm("Alles resetten?")) return;
+  if(!confirm("Weet je het zeker? Alle biertjes, kaarten en truien gaan terug naar 0.")) return;
+  snapshot();
   data = nieuweData(data.namen);
-  undoStapel = [];
+  data.gestart = true;
   opslaan();
   teken();
 }
@@ -2152,9 +2181,9 @@ function verwijderRenner(i){
 function startSpel(){
   if (startLijst.length < 2) return;
   if (spelLoopt() && !confirm("Het huidige spel wordt gewist. Opnieuw starten?")) return;
+  if (data.gestart) snapshot();
   data = nieuweData([...startLijst]);
   data.gestart = true;
-  undoStapel = [];
   opslaan();
   vulSelect();
   teken();
@@ -2176,6 +2205,11 @@ document.getElementById("percentage").addEventListener("keydown", e=>{
 
 /* Bestaande spellen van voor het startscherm tellen als gestart */
 if (!data.gestart && data.log.length) data.gestart = true;
+
+/* Jaartal van de editie: altijd het huidige jaar */
+const jaar = "'" + String(new Date().getFullYear()).slice(-2);
+document.querySelectorAll(".jaar").forEach(el=>{ el.textContent = jaar; });
+document.title = `Speciaalbierdag TDF-editie ${jaar}`;
 
 vulSelect();
 verwerkTijd();
