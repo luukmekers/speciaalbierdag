@@ -219,6 +219,25 @@ button.ghost {
 .stapelknop:hover .rug:nth-child(3) { transform: translateY(-6px) rotate(-2deg); }
 .stapelknop:active .rug:nth-child(3) { transform: translateY(2px); }
 
+/* schudden: kaarten schuiven om en om naar links en rechts */
+.stapelknop.schudt .rug:nth-child(1) { animation: schudL .9s ease-in-out; }
+.stapelknop.schudt .rug:nth-child(2) { animation: schudR .9s ease-in-out; }
+.stapelknop.schudt .rug:nth-child(3) { animation: schudL .9s ease-in-out .1s; }
+
+@keyframes schudL {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  25%, 75% { translate: -45% -4px; rotate: -10deg; }
+  50%      { translate: 0 -8px; rotate: 0deg; }
+}
+
+@keyframes schudR {
+  0%, 100% { translate: 0 0; rotate: 0deg; }
+  25%, 75% { translate: 45% -4px; rotate: 10deg; }
+  50%      { translate: 0 -8px; rotate: 0deg; }
+}
+
+.schudknop { margin-top: 8px; }
+
 .stapelknop .label {
   position: absolute;
   left: 0; right: 0;
@@ -991,6 +1010,7 @@ body.start-open { overflow: hidden; }
         <span class="label">Trek kaart</span>
       </button>
       <div class="stapelinfo" id="stapel"></div>
+      <button class="klein schudknop" onclick="schudStapel()">🔀 Schudden</button>
     </div>
     <div class="kaartplek" id="kaart">Trek een kaart voor de gekozen speler</div>
   </div>
@@ -1219,14 +1239,19 @@ function nieuweSpeler(i){
   };
 }
 
-function nieuweStapel(){
-  const stapel = [];
-  KAARTEN.forEach((k,i)=>{ for(let j=0;j<k.n;j++) stapel.push(i); });
+/* Fisher-Yates: elke volgorde even waarschijnlijk */
+function schud(stapel){
   for(let i=stapel.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [stapel[i],stapel[j]] = [stapel[j],stapel[i]];
   }
   return stapel;
+}
+
+function nieuweStapel(){
+  const stapel = [];
+  KAARTEN.forEach((k,i)=>{ for(let j=0;j<k.n;j++) stapel.push(i); });
+  return schud(stapel);
 }
 
 function nieuweData(namen){
@@ -1777,10 +1802,27 @@ function verwerkTijd(){
 setInterval(verwerkTijd, 15000);
 
 /* ================= KAARTEN ================= */
+function schudAnimatie(){
+  const knop = document.querySelector(".stapelknop");
+  knop.classList.remove("schudt");
+  void knop.offsetWidth;
+  knop.classList.add("schudt");
+}
+
+/* De resterende kaarten opnieuw schudden */
+function schudStapel(){
+  snapshot();
+  schud(data.stapel);
+  opslaan();
+  schudAnimatie();
+  melding(`Stapel geschud 🔀 (${data.stapel.length} kaarten)`);
+}
+
 function trekKaart(){
   snapshot();
   if (!data.stapel.length){
     data.stapel = nieuweStapel();
+    schudAnimatie();
     melding("Stapel is opnieuw geschud 🔀");
   }
   data.huidigeKaart = { index: data.stapel.pop(), speler: select.value, toegepast: false, id: Date.now() };
@@ -2346,7 +2388,8 @@ function startSpel(){
   vulSelect();
   teken();
   sluitStart();
-  melding("De Tour is begonnen! 🏁");
+  schudAnimatie();
+  melding("De Tour is begonnen! De kaarten zijn geschud 🔀");
 }
 
 function spelersAanpassen(){
