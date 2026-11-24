@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Speciaalbierdag TDF-editie '25</title>
+<title>Speciaalbierdag</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
@@ -661,6 +661,61 @@ body.beamer .beheer { display: none; }
 
 #beamerKnop.aan { background: var(--zwart); color: var(--geel); }
 
+/* ===== Thema's ===== */
+body[data-thema="voetbal"]     { --geel: #ff8a1f; }
+body[data-thema="handbal"]     { --geel: #5ec8f2; }
+body[data-thema="trekkertrek"] { --geel: #b5d334; }
+
+body[data-thema="handbal"] #sprintshow {
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 40px, transparent 40px 80px),
+    radial-gradient(circle at 50% 30%, #3b8ee0, #174a8c 70%);
+  background-size: 200% 100%, 100% 100%;
+}
+
+body[data-thema="trekkertrek"] #sprintshow {
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 40px, transparent 40px 80px),
+    radial-gradient(circle at 50% 30%, #a0703f, #5b3a1e 70%);
+  background-size: 200% 100%, 100% 100%;
+}
+
+.themas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
+.themakeuze {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 8px 12px;
+  border-color: var(--rand);
+  box-shadow: none;
+  position: relative;
+}
+
+.themakeuze.gekozen {
+  border-color: var(--zwart);
+  background: var(--t);
+  box-shadow: 0 3px 0 var(--zwart);
+}
+
+.themakeuze.gekozen::after {
+  content: "✔";
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 13px;
+}
+
+.themaicoon { font-size: 34px; line-height: 1.1; }
+.themanaam  { font-family: Oswald, Arial, sans-serif; text-transform: uppercase; font-size: 16px; }
+.themasub   { font-size: 12px; font-weight: 400; color: var(--zacht); }
+.themakeuze.gekozen .themasub { color: var(--zwart); }
+
 /* ===== Spelbeheer ===== */
 .beheer summary {
   cursor: pointer;
@@ -982,8 +1037,8 @@ body.start-open { overflow: hidden; }
 <body>
 
 <header>
-  <div class="sub">Etappe door het speciaalbierland</div>
-  <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie <span class="jaar">'25</span></h1>
+  <div class="sub" data-t="sub">Etappe door het speciaalbierland</div>
+  <h1>🍺 Speciaalbierdag <span data-t="icoon">🚴</span><br><span data-t="editie">TDF-editie</span> <span class="jaar">'25</span></h1>
 </header>
 
 <main>
@@ -999,13 +1054,13 @@ body.start-open { overflow: hidden; }
 </section>
 
 <section class="paneel" id="kaartpaneel">
-  <h2>🃏 Tour-kaarten</h2>
+  <h2>🃏 <span data-t="kaartenNaam">Tour-kaarten</span></h2>
   <div class="kaartzone">
     <div class="stapelvak">
       <button class="stapelknop" onclick="trekKaart()" aria-label="Trek een kaart">
         <span class="rug"></span>
         <span class="rug"></span>
-        <span class="rug">🚴</span>
+        <span class="rug" data-t="icoon">🚴</span>
         <span class="label">Trek kaart</span>
       </button>
       <div class="stapelinfo" id="stapel"></div>
@@ -1043,9 +1098,9 @@ body.start-open { overflow: hidden; }
 
 <details class="paneel beheer">
   <summary>⚙️ Spelbeheer</summary>
-  <p class="start-uitleg">Hier pas je de renners aan of begin je opnieuw. Per ongeluk gedrukt? Met ↩ Undo zet je het terug.</p>
+  <p class="start-uitleg">Hier pas je de <span data-t="deelnemers">renners</span> en het thema aan of begin je opnieuw. Per ongeluk gedrukt? Met ↩ Undo zet je het terug.</p>
   <div class="beheerknoppen">
-    <button class="klein" onclick="spelersAanpassen()">👥 Renners aanpassen</button>
+    <button class="klein" onclick="spelersAanpassen()">👥 Nieuw spel / thema</button>
     <button class="klein gevaar" onclick="resetGame()">🗑 Stand op 0 zetten</button>
   </div>
 </details>
@@ -1054,13 +1109,17 @@ body.start-open { overflow: hidden; }
 
 <div id="startscherm">
   <header>
-    <div class="sub">Inschrijving peloton</div>
-    <h1>🍺 Speciaalbierdag 🚴<br>TDF-editie <span class="jaar">'25</span></h1>
+    <div class="sub" data-t="startSub">Inschrijving peloton</div>
+    <h1>🍺 Speciaalbierdag <span data-t="icoon">🚴</span><br><span data-t="editie">TDF-editie</span> <span class="jaar">'25</span></h1>
   </header>
   <div class="start-inhoud">
     <div class="paneel">
-      <h2>🚴 Wie rijden er mee?</h2>
-      <p class="start-uitleg">Zet de renners in tafelvolgorde, met de klok mee. Dat bepaalt wie links en rechts van je zit bij de kaarten.</p>
+      <h2>🎨 Kies het thema</h2>
+      <div class="themas" id="themas"></div>
+    </div>
+    <div class="paneel">
+      <h2><span data-t="icoon">🚴</span> <span data-t="startVraag">Wie rijden er mee?</span></h2>
+      <p class="start-uitleg">Zet de <span data-t="deelnemers">renners</span> in tafelvolgorde, met de klok mee. Dat bepaalt wie links en rechts van je zit bij de kaarten.</p>
       <div class="start-waarschuwing" id="startWaarschuwing" hidden>
         ⚠️ Er loopt al een spel. Als je opnieuw start, begint iedereen weer bij 0.
       </div>
@@ -1081,10 +1140,10 @@ body.start-open { overflow: hidden; }
   </div>
 </div>
 
-<div id="sprintshow" role="dialog" aria-label="Tussensprint">
+<div id="sprintshow" role="dialog" aria-label="Sprint">
   <div class="finishlijn"></div>
   <div class="sprint-inhoud">
-    <div class="sprint-titel">🏁 Tussensprint 🏁</div>
+    <div class="sprint-titel"><span data-t="vlag">🏁</span> <span data-t="sprintTitel">Tussensprint</span> <span data-t="vlag">🏁</span></div>
     <div class="sprint-sub" id="sprintSub"></div>
     <div class="sprint-klok" id="sprintKlok"></div>
     <div class="sprint-podium" id="sprintPodium"></div>
@@ -1130,7 +1189,7 @@ const KLEUREN = [
   - leegloper:  direct -1%, daarna elke 5 min -1% tijdens je volgende bier
 */
 const KAART_VERSIE = 3;   /* ophogen = lopende spellen krijgen een nieuw geschudde stapel */
-const KAARTEN = [
+const TOUR_KAARTEN = [
   /* uit Tour.docx */
   { n:1, icoon:"💥", titel:"Valpartij", tekst:"Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2 },
   { n:1, icoon:"🤕", titel:"Massale valpartij", tekst:"-2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
@@ -1188,9 +1247,173 @@ function kaartSoort(k){
   if (k.type==="factor") return ["var(--groen)","Volgende bier"];
   if (k.type==="volgende") return k.waarde > 0 ? ["var(--groen)","Volgende bier"] : ["var(--rood)","Volgende bier"];
   if (k.type==="opdracht" || k.type==="actie") return ["var(--oranje)","Opdracht"];
-  if (k.type==="sprint")   return ["var(--groen)","Groene trui"];
+  if (k.type==="sprint")   return ["var(--groen)", T().k2.naam];
   return ["var(--paars)","Tactiek"];
 }
+
+/* ================= THEMA'S ================= */
+/* Elk thema heeft zijn eigen teksten, klassementen, kaarten en achtergrond.
+   De speltypes (pct, volgende, sprint, ...) zijn voor alle thema's hetzelfde. */
+
+const VOETBAL_KAARTEN = [
+  { n:3, icoon:"⚽", titel:"Penaltyserie", tekst:"Iedereen drinkt zijn biertje leeg, zo snel als het kan. Wie het eerst leeg is scoort voor de topscorerslijst. 1e: 5 goals, 2e: 3 goals, 3e: 1 goal.", type:"sprint" },
+  { n:1, icoon:"🟨", titel:"Gele kaart", tekst:"Je maakt een domme overtreding op het middenveld.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🟥", titel:"Rode kaart", tekst:"Je wordt van het veld gestuurd. Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2, label:"rode kaart" },
+  { n:1, icoon:"🤸", titel:"Schwalbe", tekst:"Je duikt in het strafschopgebied, maar de scheids trapt er niet in.", type:"pct", waarde:-2 },
+  { n:1, icoon:"📺", titel:"VAR-check", tekst:"De VAR keurt een doelpunt af. Kies iemand die -1,5% krijgt.", type:"kies", waarde:-1.5 },
+  { n:1, icoon:"🎩", titel:"Hattrick", tekst:"Neem een shotje op je hattrick. Je volgende biertje telt dubbel (geen % voor het shotje).", type:"dubbel" },
+  { n:1, icoon:"🤝", titel:"Assist", tekst:"Je geeft een niet te missen assist. Kies een medespeler die +1,5% krijgt.", type:"kies", waarde:1.5 },
+  { n:1, icoon:"🥄", titel:"Panenka", tekst:"Brutaal in het midden. Hoe zwaarder je volgende biertje, hoe meer het oplevert: het telt anderhalf keer.", type:"factor", waarde:1.5 },
+  { n:1, icoon:"🙈", titel:"Eigen doelpunt", tekst:"Je kopt de bal keurig in je eigen doel.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🚩", titel:"Buitenspel", tekst:"De vlag gaat omhoog. Je volgende biertje telt 1,5% minder.", type:"volgende", waarde:-1.5, label:"buitenspel" },
+  { n:1, icoon:"🔄", titel:"Wissel", tekst:"Je wordt gewisseld. Wijs een invaller aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, icoon:"🌭", titel:"Rust", tekst:"Het is rust. Haal een broodje of snack en eet die op voordat je verder mag drinken.", type:"opdracht", label:"🌭 een snack eten" },
+  { n:1, icoon:"🍢", titel:"Bitterballen in de kantine", tekst:"Eet een bitterbal (of iets anders van tafel) voordat je verder mag drinken.", type:"opdracht", label:"🍢 een bitterbal eten" },
+  { n:1, icoon:"💧", titel:"Drinkpauze", tekst:"Het is warm. Drink je volgende biertje uit een bidon, en dan +2%.", type:"volgende", waarde:2, label:"bidon" },
+  { n:1, icoon:"🌊", titel:"De wave", tekst:"Het hele stadion doet de wave. Iedereen staat even op: iedereen +1%.", type:"iedereen", waarde:1 },
+  { n:1, icoon:"⛈️", titel:"Onweer", tekst:"De wedstrijd ligt stil door onweer. Iedereen -1%.", type:"iedereen", waarde:-1 },
+  { n:1, icoon:"🧱", titel:"Muurtje", tekst:"Jij en je buren staan in de muur en krijgen de bal vol op de neus. -2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:1, icoon:"🔁", titel:"Eén-twee", tekst:"Een prachtige één-twee met degene links van je. +2% voor allebei.", type:"buren", waarde:2, links:true },
+  { n:1, icoon:"🤜", titel:"Kopduel", tekst:"Kies een tegenstander voor een kopduel. Jullie drinken het volgende biertje tegelijk (samen slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
+  { n:1, icoon:"🪑", titel:"Bankzitter", tekst:"10 minuten op de bank. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
+  { n:1, icoon:"⏱️", titel:"Blessuretijd", tekst:"De wedstrijd duurt maar en duurt maar. Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
+  { n:1, icoon:"👔", titel:"Trainer ontslagen", tekst:"De club van de koploper ontslaat de trainer. -2% voor de koploper.", type:"koploper", waarde:-2 },
+  { n:1, icoon:"📉", titel:"Degradatiekandidaat", tekst:"Iedereen gunt de hekkensluiter een puntje. De nummer laatst krijgt +2%.", type:"laatste", waarde:2 },
+  { n:1, icoon:"🎯", titel:"Winnende goal", tekst:"Je scoort in de 90e minuut!", type:"pct", waarde:2 },
+  { n:1, icoon:"🦵", titel:"Omhaal", tekst:"Een omhaal, zo in de kruising.", type:"pct", waarde:2 },
+  { n:1, icoon:"🥅", titel:"Paal", tekst:"Vol op de paal. Zo dichtbij...", type:"pct", waarde:-1 },
+  { n:1, icoon:"😩", titel:"Penalty gemist", tekst:"Je schiet de penalty hoog over.", type:"pct", waarde:-1.5 },
+  { n:1, icoon:"🏅", titel:"Man of the match", tekst:"De groep kiest samen de man of the match (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
+  { n:1, icoon:"🧡", titel:"Oranjegekte", tekst:"Je hebt je helemaal in het oranje gehesen.", type:"pct", waarde:1 },
+  { n:1, icoon:"🧤", titel:"Wereldredding", tekst:"Je keeper houdt de nul.", type:"pct", waarde:1.5 },
+  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
+  { n:1, icoon:"😤", titel:"Opstootje", tekst:"Iedereen gaat staan en roept zo hard mogelijk: SCHEIDS!", type:"actie" },
+  { n:1, icoon:"🎶", titel:"Volkslied", tekst:"Iedereen gaat staan en zingt het eerste couplet van het Wilhelmus.", type:"actie" }
+];
+
+const HANDBAL_KAARTEN = [
+  { n:3, icoon:"🏃", titel:"Snelle break", tekst:"Iedereen drinkt zijn biertje leeg, zo snel als het kan. Wie het eerst leeg is scoort voor de topscorerslijst. 1e: 5 goals, 2e: 3 goals, 3e: 1 goal.", type:"sprint" },
+  { n:1, icoon:"⏱️", titel:"Twee minuten", tekst:"Je zit twee minuten op de strafbank. Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2, label:"tijdstraf" },
+  { n:1, icoon:"🦘", titel:"Kempa-trick", tekst:"Een spectaculaire kempa, gevangen in de lucht!", type:"pct", waarde:2 },
+  { n:1, icoon:"🎯", titel:"Zevenmeter", tekst:"Je mag de zevenmeter nemen. Hoe zwaarder je volgende biertje, hoe meer het oplevert: het telt anderhalf keer.", type:"factor", waarde:1.5 },
+  { n:1, icoon:"🍯", titel:"Hars aan je handen", tekst:"Plakhanden! Drink je volgende biertje zonder het glas neer te zetten, en dan +2%.", type:"volgende", waarde:2, label:"hars" },
+  { n:1, icoon:"🐢", titel:"Passief spel", tekst:"De scheids steekt zijn arm op: passief spel.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🚶", titel:"Loopfout", tekst:"Vier stappen met de bal. Balverlies.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🔵", titel:"Cirkelloper", tekst:"Kies een cirkelloper. Jullie drinken het volgende biertje tegelijk (samen slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
+  { n:1, icoon:"🛡️", titel:"6-0 dekking", tekst:"Jij en je buren staan potdicht, maar krijgen alles over je heen. -2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:1, icoon:"✋", titel:"Steekpass", tekst:"Een gouden steekpass met degene links van je. +2% voor allebei.", type:"buren", waarde:2, links:true },
+  { n:1, icoon:"🔄", titel:"Wissel", tekst:"Wijs een wisselspeler aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, icoon:"🕐", titel:"Time-out", tekst:"De coach vraagt een time-out. Iedereen proost: +1%.", type:"iedereen", waarde:1 },
+  { n:1, icoon:"💦", titel:"Gladde vloer", tekst:"Er ligt zweet op de vloer en het hele team glijdt uit. Iedereen -1%.", type:"iedereen", waarde:-1 },
+  { n:1, icoon:"🟥", titel:"Rode kaart", tekst:"Een harde overtreding op de cirkel. Douchen.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🧤", titel:"Keepersredding", tekst:"Jouw keeper pakt een vrije bal. Kies een tegenstander die -1,5% krijgt.", type:"kies", waarde:-1.5 },
+  { n:1, icoon:"🤝", titel:"Assist", tekst:"Je speelt een teamgenoot vrij. Kies iemand die +1,5% krijgt.", type:"kies", waarde:1.5 },
+  { n:1, icoon:"🏅", titel:"MVP", tekst:"De groep kiest samen de MVP van de wedstrijd (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
+  { n:1, icoon:"🪑", titel:"Wisselbank", tekst:"10 minuten op de wisselbank. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
+  { n:1, icoon:"🍟", titel:"Kantinedienst", tekst:"Je hebt kantinedienst. Eet een frietje of snack voordat je verder mag drinken.", type:"opdracht", label:"🍟 een snack eten" },
+  { n:1, icoon:"🍊", titel:"Sinaasappelpauze", tekst:"Rust! Eet een stukje fruit (of chips, we zijn geen sporters) voordat je verder mag drinken.", type:"opdracht", label:"🍊 iets eten" },
+  { n:1, icoon:"🪫", titel:"Lege tank", tekst:"Je conditie is op. Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
+  { n:1, icoon:"🔒", titel:"Man-op-man", tekst:"De koploper wordt de hele wedstrijd kort gedekt. -2,5% voor de koploper.", type:"koploper", waarde:-2.5 },
+  { n:1, icoon:"🐶", titel:"Underdog", tekst:"De hele hal staat achter de underdog. De nummer laatst krijgt +2%.", type:"laatste", waarde:2 },
+  { n:1, icoon:"⚡", titel:"Energiedrankje", tekst:"Neem een shotje als energiedrankje. Je volgende biertje telt dubbel (geen % voor het shotje).", type:"dubbel" },
+  { n:1, icoon:"🦶", titel:"Voetfout", tekst:"De bal raakt je voet. Fluitsignaal.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🚀", titel:"Kruisingschot", tekst:"Vanaf negen meter, zo in de kruising.", type:"pct", waarde:2 },
+  { n:1, icoon:"🥅", titel:"Paal", tekst:"Tegen de paal en eruit.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🎙️", titel:"Commentator", tekst:"Je zeurt als een commentator die alles beter weet.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🎉", titel:"Thuispubliek", tekst:"Het thuispubliek scandeert je naam.", type:"pct", waarde:1 },
+  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🕺", titel:"Doelpuntviering", tekst:"Doe je beste doelpuntviering. De rest geeft je een cijfer.", type:"actie" }
+];
+
+const TREKKER_KAARTEN = [
+  { n:3, icoon:"🏁", titel:"Full pull", tekst:"Iedereen drinkt zijn biertje leeg, zo snel als het kan. Wie het eerst leeg is haalt de full pull. 1e: 5 pt, 2e: 3 pt, 3e: 1 pt.", type:"sprint" },
+  { n:1, icoon:"🛞", titel:"Wielspin", tekst:"Je wielen draaien door in de klei.", type:"pct", waarde:-1.5 },
+  { n:1, icoon:"💨", titel:"Rookpluim", tekst:"Een gitzwarte rookpluim, het publiek gaat los!", type:"pct", waarde:2 },
+  { n:1, icoon:"🔥", titel:"Turbo", tekst:"Neem een shotje als turboboost. Je volgende biertje telt dubbel (geen % voor het shotje).", type:"dubbel" },
+  { n:1, icoon:"🏋️", titel:"Extra gewichten", tekst:"Er gaan extra gewichten op je sleepwagen. Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2, label:"gewichten" },
+  { n:1, icoon:"🧨", titel:"Nitro", tekst:"Volgas! Hoe zwaarder je volgende biertje, hoe meer het oplevert: het telt anderhalf keer.", type:"factor", waarde:1.5 },
+  { n:1, icoon:"🐎", titel:"Op de achterwielen", tekst:"Je trekker gaat steigeren als een paard.", type:"pct", waarde:1 },
+  { n:1, icoon:"🔧", titel:"Motorpech", tekst:"Je motor slaat af vlak voor de lijn.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🫗", titel:"Lekke tank", tekst:"Er lekt diesel uit je tank. Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
+  { n:1, icoon:"⚙️", titel:"Slippende koppeling", tekst:"Je koppeling slipt. Je volgende biertje telt 1% minder.", type:"volgende", waarde:-1, label:"koppeling" },
+  { n:1, icoon:"🟫", titel:"Modderbad", tekst:"Jij en je buren worden ondergespoten met modder. -2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:1, icoon:"🧑‍🌾", titel:"Burenhulp", tekst:"Degene links van je trekt je uit de modder. +2% voor allebei.", type:"buren", waarde:2, links:true },
+  { n:1, icoon:"🔗", titel:"Trekhaak", tekst:"Haak aan bij een andere trekker. Jullie drinken het volgende biertje tegelijk (samen slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
+  { n:1, icoon:"👨‍🌾", titel:"Loonwerker", tekst:"Huur een loonwerker in. Wijs iemand aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, icoon:"😴", titel:"Middagdutje in het hooi", tekst:"10 minuten uitrusten tussen de hooibalen. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
+  { n:1, icoon:"🧀", titel:"Boerenlunch", tekst:"Eet een stukje kaas of worst van tafel voordat je verder mag drinken.", type:"opdracht", label:"🧀 iets eten" },
+  { n:1, icoon:"🌭", titel:"Frikandel speciaal", tekst:"Haal een snack bij de kraam en eet die op voordat je verder mag drinken.", type:"opdracht", label:"🌭 een snack eten" },
+  { n:1, icoon:"🧴", titel:"Koude melkbus", tekst:"Drink je volgende biertje uit een beker of bidon, en dan +2%.", type:"volgende", waarde:2, label:"melkbus" },
+  { n:1, icoon:"🎉", titel:"Optocht", tekst:"Alle trekkers rijden in optocht over het terrein. Iedereen +1%.", type:"iedereen", waarde:1 },
+  { n:1, icoon:"🌧️", titel:"Stortbui", tekst:"De baan is één grote modderpoel. Iedereen -1%.", type:"iedereen", waarde:-1 },
+  { n:1, icoon:"🪝", titel:"Sleepwagen kapot", tekst:"De sleepwagen van de koploper breekt in tweeën. -2,5% voor de koploper.", type:"koploper", waarde:-2.5 },
+  { n:1, icoon:"🚜", titel:"Oldtimer", tekst:"Het publiek juicht voor de oude trekker. De nummer laatst krijgt +2%.", type:"laatste", waarde:2 },
+  { n:1, icoon:"⛽", titel:"Diesel tanken", tekst:"Je tankt diesel voor een collega. Kies iemand die +1,5% krijgt.", type:"kies", waarde:1.5 },
+  { n:1, icoon:"💩", titel:"Mest uitrijden", tekst:"Je rijdt mest uit vlak naast een tegenstander. Kies iemand die -1,5% krijgt.", type:"kies", waarde:-1.5 },
+  { n:1, icoon:"🏅", titel:"Publieksprijs", tekst:"De groep kiest samen de publiekslieveling (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
+  { n:1, icoon:"🌾", titel:"Strobaal", tekst:"Je rijdt een strobaal omver.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🪨", titel:"Vast in de klei", tekst:"Je zit muurvast. De trekker moet worden losgetrokken.", type:"pct", waarde:-2 },
+  { n:1, icoon:"📏", titel:"Ver over de lijn", tekst:"Je trekt de sleepwagen ver over de lijn.", type:"pct", waarde:2 },
+  { n:1, icoon:"⚖️", titel:"Goede maatjes met de jury", tekst:"De jury knijpt een oogje toe.", type:"pct", waarde:1.5 },
+  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
+  { n:1, icoon:"🤠", titel:"Line dance", tekst:"Iedereen gaat staan voor een rondje line dance.", type:"actie" },
+  { n:1, icoon:"📯", titel:"Toeteren", tekst:"Iedereen toetert tien seconden lang als een trekker.", type:"actie" }
+];
+
+const THEMAS = {
+  tour: {
+    naam: "Tour de France", icoon: "🚴", spiegel: true, accent: "#ffd400",
+    editie: "TDF-editie", sub: "Etappe door het speciaalbierland",
+    startSub: "Inschrijving peloton", startVraag: "Wie rijden er mee?",
+    deelnemer: "renner", deelnemers: "renners", kaartenNaam: "Tour-kaarten",
+    leider: "🟡",
+    k1: { naam: "Gele trui", icoon: () => trui("#ffd400") },
+    k2: { naam: "Groene trui", sub: "sprintpunten", eenheid: "pt", icoon: () => trui("#1f9d55", "#fff") },
+    sprintTitel: "Tussensprint", vlag: "🏁",
+    kaarten: TOUR_KAARTEN,
+    achtergrond: g => tekenEtappe(g)
+  },
+  voetbal: {
+    naam: "Voetbal", icoon: "⚽", spiegel: false, accent: "#ff8a1f",
+    editie: "WK-editie", sub: "Wedstrijd in de speciaalbier-arena",
+    startSub: "Opstelling bekendmaken", startVraag: "Wie staan er in de basis?",
+    deelnemer: "speler", deelnemers: "spelers", kaartenNaam: "Wedstrijdkaarten",
+    leider: "👑",
+    k1: { naam: "Gouden Bal", icoon: () => "🏆" },
+    k2: { naam: "Topscorer", sub: "goals", eenheid: "goals", icoon: () => "⚽" },
+    sprintTitel: "Penaltyserie", vlag: "⚽",
+    kaarten: VOETBAL_KAARTEN,
+    achtergrond: g => tekenStadion(g)
+  },
+  handbal: {
+    naam: "Handbal", icoon: "🤾", spiegel: false, accent: "#5ec8f2",
+    editie: "Handbal-editie", sub: "Thuiswedstrijd in de speciaalbierhal",
+    startSub: "Selectie bekendmaken", startVraag: "Wie zitten er in de selectie?",
+    deelnemer: "speler", deelnemers: "spelers", kaartenNaam: "Wedstrijdkaarten",
+    leider: "👑",
+    k1: { naam: "MVP", icoon: () => "🏆" },
+    k2: { naam: "Topscorer", sub: "goals", eenheid: "goals", icoon: () => "🤾" },
+    sprintTitel: "Snelle break", vlag: "🏃",
+    kaarten: HANDBAL_KAARTEN,
+    achtergrond: g => tekenHal(g)
+  },
+  trekkertrek: {
+    naam: "Trekkertrek", icoon: "🚜", spiegel: true, accent: "#b5d334",
+    editie: "Trekkertrek-editie", sub: "Full pull op het speciaalbierfestival",
+    startSub: "Inschrijving trekkers", startVraag: "Wie rijden er mee?",
+    deelnemer: "rijder", deelnemers: "rijders", kaartenNaam: "Trekkerkaarten",
+    leider: "👑",
+    k1: { naam: "Kampioen", icoon: () => "🏆" },
+    k2: { naam: "Full pull", sub: "punten", eenheid: "pt", icoon: () => "🚜" },
+    sprintTitel: "Full pull", vlag: "🏁",
+    kaarten: TREKKER_KAARTEN,
+    achtergrond: g => tekenBoerderij(g)
+  }
+};
+
+let thema = "tour";
+const T = () => THEMAS[thema] || THEMAS.tour;
+let KAARTEN = TOUR_KAARTEN;
 
 const WIEL_DUUR = 10 * 60 * 1000;
 const LEEGLOOP_INTERVAL = 5 * 60 * 1000;
@@ -1271,6 +1494,7 @@ function nieuweData(namen){
 let data;
 try { data = JSON.parse(localStorage.getItem(OPSLAG)); } catch(e) { data = null; }
 if (!data || !data.namen || !data.spelers) data = nieuweData([...STANDAARD_SPELERS]);
+KAARTEN = (THEMAS[data.thema] || THEMAS.tour).kaarten;
 
 /* Kaartenset veranderd: stapel opnieuw schudden, stand blijft staan */
 if (data.kaartVersie !== KAART_VERSIE){
@@ -1346,65 +1570,413 @@ function geefPct(naam, waarde, wat){
   data.log.push({ speler:naam, bier:s.bier, wat, waarde, totaal:s.pct });
 }
 
-/* ================= ACHTERGROND (ETAPPE) ================= */
-function berg(x1, top, x2, toppunt, kleur, sneeuw){
-  ctx.beginPath();
-  ctx.moveTo(x1, startY);
-  ctx.lineTo(toppunt, top);
-  ctx.lineTo(x2, startY);
-  ctx.closePath();
-  ctx.fillStyle = kleur;
-  ctx.fill();
+/* ================= ACHTERGRONDEN PER THEMA ================= */
+/* Vast zaadje: publiek, bomen en kluiten staan elke keer op dezelfde plek */
+function zaad(s){
+  return () => {
+    s = s + 0x6D2B79F5 | 0;
+    let t = Math.imul(s ^ s >>> 15, 1 | s);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+/* y-positie op een fractie tussen bovenkant grafiek en de x-as */
+const horizon = f => topY + (startY - topY) * f;
+
+/* Onderrand onder de x-as, met stippellijn */
+function onderrand(g, kleur, lijn){
+  g.fillStyle = kleur;
+  g.fillRect(0, startY, B, H - startY);
+  g.strokeStyle = lijn;
+  g.lineWidth = 2;
+  g.setLineDash([14, 12]);
+  g.beginPath();
+  g.moveTo(0, startY + 38);
+  g.lineTo(B, startY + 38);
+  g.stroke();
+  g.setLineDash([]);
+}
+
+/* De achtergrond verandert alleen bij een ander thema of andere hoogte:
+   één keer tekenen, daarna kopiëren (scheelt veel werk tijdens de animatie) */
+let achtergrondCache = null;
+
+function tekenAchtergrond(){
+  const sleutel = thema + "|" + H;
+  if (!achtergrondCache || achtergrondCache.sleutel !== sleutel){
+    const c = document.createElement("canvas");
+    c.width = B * dpr;
+    c.height = H * dpr;
+    const g = c.getContext("2d");
+    g.scale(dpr, dpr);
+    T().achtergrond(g);
+    achtergrondCache = { sleutel, c };
+  }
+  ctx.drawImage(achtergrondCache.c, 0, 0, B, H);
+}
+
+/* ----- Tour de France: bergetappe ----- */
+function berg(g, x1, top, x2, toppunt, kleur, sneeuw){
+  g.beginPath();
+  g.moveTo(x1, startY);
+  g.lineTo(toppunt, top);
+  g.lineTo(x2, startY);
+  g.closePath();
+  g.fillStyle = kleur;
+  g.fill();
 
   if (sneeuw){
     const h = (startY - top) * 0.18;
     const fl = (toppunt - x1) / (startY - top);
     const fr = (x2 - toppunt) / (startY - top);
-    ctx.beginPath();
-    ctx.moveTo(toppunt, top);
-    ctx.lineTo(toppunt + fr*h, top + h);
-    ctx.lineTo(toppunt + fr*h*0.4, top + h*0.75);
-    ctx.lineTo(toppunt, top + h);
-    ctx.lineTo(toppunt - fl*h*0.4, top + h*0.75);
-    ctx.lineTo(toppunt - fl*h, top + h);
-    ctx.closePath();
-    ctx.fillStyle = "#ffffff";
-    ctx.fill();
+    g.beginPath();
+    g.moveTo(toppunt, top);
+    g.lineTo(toppunt + fr*h, top + h);
+    g.lineTo(toppunt + fr*h*0.4, top + h*0.75);
+    g.lineTo(toppunt, top + h);
+    g.lineTo(toppunt - fl*h*0.4, top + h*0.75);
+    g.lineTo(toppunt - fl*h, top + h);
+    g.closePath();
+    g.fillStyle = "#ffffff";
+    g.fill();
   }
 }
 
-function tekenAchtergrond(){
+function tekenEtappe(g){
   /* lucht */
-  const lucht = ctx.createLinearGradient(0, 0, 0, startY);
+  const lucht = g.createLinearGradient(0, 0, 0, startY);
   lucht.addColorStop(0, "#8ec9ff");
   lucht.addColorStop(1, "#e6f4ff");
-  ctx.fillStyle = lucht;
-  ctx.fillRect(0, 0, B, H);
+  g.fillStyle = lucht;
+  g.fillRect(0, 0, B, H);
 
   /* zon */
-  ctx.beginPath();
-  ctx.arc(B-110, 80, 30, 0, Math.PI*2);
-  ctx.fillStyle = "rgba(255,212,0,.85)";
-  ctx.fill();
+  g.beginPath();
+  g.arc(B-110, 80, 30, 0, Math.PI*2);
+  g.fillStyle = "rgba(255,212,0,.85)";
+  g.fill();
 
   /* bergen: ver weg, dan dichtbij */
-  berg(160, 150, 520, 360, "#a9b8c9", true);
-  berg(420, 110, 780, 610, "#9aaabd", true);
-  berg(-40, 230, 330, 150, "#7fb069", false);
-  berg(260, 200, 620, 450, "#6c9d58", false);
-  berg(560, 260, 820, 700, "#7fb069", false);
+  berg(g, 160, 150, 520, 360, "#a9b8c9", true);
+  berg(g, 420, 110, 780, 610, "#9aaabd", true);
+  berg(g, -40, 230, 330, 150, "#7fb069", false);
+  berg(g, 260, 200, 620, 450, "#6c9d58", false);
+  berg(g, 560, 260, 820, 700, "#7fb069", false);
 
   /* weg */
-  ctx.fillStyle = "#3b3b3b";
-  ctx.fillRect(0, startY, B, H - startY);
-  ctx.strokeStyle = "#ffffff";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([14, 12]);
-  ctx.beginPath();
-  ctx.moveTo(0, startY + 38);
-  ctx.lineTo(B, startY + 38);
-  ctx.stroke();
-  ctx.setLineDash([]);
+  onderrand(g, "#3b3b3b", "#ffffff");
+}
+
+/* ----- Voetbal: stadion met publiek en veld ----- */
+function tekenStadion(g){
+  const r = zaad(7);
+  const tribune = horizon(.3);
+
+  /* avondlucht */
+  const lucht = g.createLinearGradient(0, 0, 0, tribune);
+  lucht.addColorStop(0, "#0d1b33");
+  lucht.addColorStop(1, "#28466f");
+  g.fillStyle = lucht;
+  g.fillRect(0, 0, B, tribune);
+
+  /* tribune vol oranje publiek */
+  const tribTop = tribune * 0.35;
+  g.fillStyle = "#30343b";
+  g.fillRect(0, tribTop, B, tribune - tribTop);
+  const publiek = ["#ff7a00","#ff7a00","#ff9a3c","#ffffff","#d93a3a","#ffd400","#2f6fdb"];
+  for (let y = tribTop + 6, rij = 0; y < tribune - 3; y += 7, rij++)
+    for (let x = 3 + (rij % 2) * 3; x < B; x += 7){
+      g.globalAlpha = .55 + r() * .45;
+      g.fillStyle = publiek[Math.floor(r() * publiek.length)];
+      g.beginPath();
+      g.arc(x, y, 2.4, 0, Math.PI*2);
+      g.fill();
+    }
+  g.globalAlpha = 1;
+
+  /* lichtmasten */
+  [40, B-40].forEach(x=>{
+    const gloed = g.createRadialGradient(x, 10, 2, x, 10, 80);
+    gloed.addColorStop(0, "rgba(255,251,224,.6)");
+    gloed.addColorStop(1, "rgba(255,251,224,0)");
+    g.fillStyle = gloed;
+    g.fillRect(x-80, 0, 160, 90);
+    g.fillStyle = "#9aa3ad";
+    g.fillRect(x-2, 10, 4, tribTop);
+    g.fillStyle = "#fffbe0";
+    g.fillRect(x-16, 4, 32, 12);
+  });
+
+  /* reclameborden */
+  const bord = 16;
+  g.fillStyle = "#161616";
+  g.fillRect(0, tribune, B, bord);
+  g.font = "700 10px Inter, Arial";
+  g.textBaseline = "middle";
+  for (let x = 0, i = 0; x < B; x += 120, i++){
+    g.fillStyle = i % 2 ? "#ff7a00" : "#ffd400";
+    g.fillRect(x + 2, tribune + 2, 116, bord - 4);
+    g.fillStyle = "#161616";
+    g.fillText(i % 2 ? "PROOST!" : "SPECIAALBIER", x + 10, tribune + bord/2 + 1);
+  }
+  g.textBaseline = "alphabetic";
+
+  /* gemaaid gras */
+  const veldTop = tribune + bord;
+  for (let x = 0, i = 0; x < B; x += 48, i++){
+    g.fillStyle = i % 2 ? "#3a9a4a" : "#2f8a3f";
+    g.fillRect(x, veldTop, 48, startY - veldTop);
+  }
+
+  /* veldlijnen */
+  const mid = (veldTop + startY) / 2;
+  const hoog = startY - veldTop;
+  g.strokeStyle = "rgba(255,255,255,.75)";
+  g.lineWidth = 2;
+  g.strokeRect(20, veldTop + 8, B - 40, hoog - 16);
+  g.beginPath();
+  g.moveTo(B*.5, veldTop + 8);
+  g.lineTo(B*.5, startY - 8);
+  g.stroke();
+  g.beginPath();
+  g.arc(B*.5, mid, Math.min(55, hoog/3), 0, Math.PI*2);
+  g.stroke();
+  const zestien = Math.min(95, hoog * .38);
+  g.strokeRect(B-20-110, mid - zestien, 110, zestien*2);
+  g.strokeRect(B-20-40, mid - zestien*.45, 40, zestien*.9);
+  g.fillStyle = "#ffffff";
+  g.beginPath();
+  g.arc(B-20-80, mid, 2.5, 0, Math.PI*2);
+  g.fill();
+
+  /* doel met net */
+  const doel = zestien * .3;
+  g.fillStyle = "rgba(255,255,255,.25)";
+  g.fillRect(B-20, mid - doel, 14, doel*2);
+  g.strokeStyle = "#ffffff";
+  g.lineWidth = 3;
+  g.strokeRect(B-20, mid - doel, 14, doel*2);
+
+  onderrand(g, "#1f5e2c", "rgba(255,255,255,.6)");
+}
+
+/* ----- Handbal: sporthal met houten vloer ----- */
+function tekenHal(g){
+  const r = zaad(11);
+  const vloerTop = horizon(.32);
+
+  /* wand */
+  const wand = g.createLinearGradient(0, 0, 0, vloerTop);
+  wand.addColorStop(0, "#c9d6e3");
+  wand.addColorStop(1, "#e9eef3");
+  g.fillStyle = wand;
+  g.fillRect(0, 0, B, vloerTop);
+
+  /* dakspanten */
+  g.strokeStyle = "rgba(90,110,130,.35)";
+  g.lineWidth = 2;
+  for (let x = 0; x < B; x += 60){
+    g.beginPath();
+    g.moveTo(x, 0);
+    g.lineTo(x + 30, 16);
+    g.lineTo(x + 60, 0);
+    g.stroke();
+  }
+
+  /* vlaggetjes */
+  const vlag = ["#d93a3a","#ffd400","#2f6fdb","#1f9d55","#ff7a00"];
+  const draad = x => 20 + Math.sin(x / B * Math.PI) * 10;
+  g.strokeStyle = "#555";
+  g.lineWidth = 1;
+  g.beginPath();
+  for (let x = 0; x <= B; x += 10) x ? g.lineTo(x, draad(x)) : g.moveTo(x, draad(x));
+  g.stroke();
+  for (let x = 11, i = 0; x < B; x += 22, i++){
+    const y = draad(x);
+    g.fillStyle = vlag[i % vlag.length];
+    g.beginPath();
+    g.moveTo(x - 7, y);
+    g.lineTo(x + 7, y);
+    g.lineTo(x, y + 13);
+    g.closePath();
+    g.fill();
+  }
+
+  /* scorebord */
+  g.fillStyle = "#161616";
+  g.fillRect(B/2 - 75, 36, 150, 38);
+  g.font = "700 22px Oswald, Arial";
+  g.textAlign = "center";
+  g.fillStyle = "#ff9d1a";
+  g.fillText("26 : 24", B/2, 63);
+  g.textAlign = "left";
+
+  /* tribune */
+  const tribTop = vloerTop - Math.min(60, vloerTop * .4);
+  g.fillStyle = "#8a96a3";
+  g.fillRect(0, tribTop, B, vloerTop - tribTop);
+  const publiek = ["#2f6fdb","#ffffff","#d93a3a","#ffd400","#161616"];
+  for (let y = tribTop + 5, rij = 0; y < vloerTop - 3; y += 8, rij++)
+    for (let x = 4 + (rij % 2) * 4; x < B; x += 9){
+      if (r() < .25) continue;
+      g.fillStyle = publiek[Math.floor(r() * publiek.length)];
+      g.beginPath();
+      g.arc(x, y, 2.8, 0, Math.PI*2);
+      g.fill();
+    }
+
+  /* houten vloer */
+  for (let y = vloerTop, i = 0; y < startY; y += 12, i++){
+    g.fillStyle = i % 2 ? "#dba56d" : "#d29a60";
+    g.fillRect(0, y, B, 12);
+    g.fillStyle = "rgba(120,70,30,.25)";
+    for (let x = (i * 53) % 140; x < B; x += 140) g.fillRect(x, y, 1.5, 12);
+  }
+
+  /* veldlijnen met doelgebied (6 m) en vrijeworplijn (9 m) */
+  const mid = (vloerTop + startY) / 2;
+  const zes = Math.min(130, (startY - vloerTop) * .55);
+  g.fillStyle = "rgba(47,111,219,.45)";
+  g.beginPath();
+  g.arc(B - 10, mid, zes, Math.PI/2, Math.PI*1.5);
+  g.closePath();
+  g.fill();
+  g.strokeStyle = "#ffffff";
+  g.lineWidth = 2.5;
+  g.beginPath();
+  g.arc(B - 10, mid, zes, Math.PI/2, Math.PI*1.5);
+  g.stroke();
+  g.setLineDash([8, 8]);
+  g.beginPath();
+  g.arc(B - 10, mid, zes * 1.45, Math.PI*.62, Math.PI*1.38);
+  g.stroke();
+  g.setLineDash([]);
+  g.beginPath();
+  g.moveTo(B * .42, vloerTop + 6);
+  g.lineTo(B * .42, startY - 6);
+  g.stroke();
+  g.strokeRect(14, vloerTop + 6, B - 28, startY - vloerTop - 12);
+
+  /* doel */
+  const doel = Math.min(60, zes * .5);
+  g.fillStyle = "rgba(255,255,255,.4)";
+  g.fillRect(B - 14, mid - doel/2, 12, doel);
+  g.fillStyle = "#d93a3a";
+  for (let y = mid - doel/2; y < mid + doel/2; y += 10) g.fillRect(B - 16, y, 4, 5);
+
+  onderrand(g, "#1d3557", "rgba(255,255,255,.6)");
+}
+
+/* ----- Trekkertrek: boerenland met kleibaan ----- */
+function tekenBoerderij(g){
+  const r = zaad(23);
+  const hor = horizon(.42);
+  const rond = (x, y, s) => { g.beginPath(); g.arc(x, y, s, 0, Math.PI*2); g.fill(); };
+
+  /* lucht, zon en wolkjes */
+  const lucht = g.createLinearGradient(0, 0, 0, hor);
+  lucht.addColorStop(0, "#7cc4f5");
+  lucht.addColorStop(1, "#fdf1d2");
+  g.fillStyle = lucht;
+  g.fillRect(0, 0, B, hor + 40);
+  g.fillStyle = "rgba(255,212,0,.9)";
+  rond(130, 70, 28);
+  g.fillStyle = "rgba(255,255,255,.85)";
+  [[300,60],[520,40],[650,90]].forEach(([x,y])=>{ rond(x, y, 16); rond(x + 18, y - 6, 20); rond(x + 38, y, 15); });
+
+  /* glooiende akkers */
+  g.fillStyle = "#9cc95a";
+  g.beginPath();
+  g.moveTo(0, hor + 40);
+  for (let x = 0; x <= B; x += 20) g.lineTo(x, hor - 10 - Math.sin(x / 90) * 8);
+  g.lineTo(B, hor + 40);
+  g.closePath();
+  g.fill();
+
+  /* bomenrij */
+  for (let x = -10; x < B; x += 18 + r() * 14){
+    const h = 14 + r() * 16;
+    g.fillStyle = r() < .5 ? "#3f7a34" : "#4c8a3c";
+    rond(x, hor - 14 - h * .4, h * .6);
+  }
+
+  /* schuur en silo */
+  const sx = B - 210, sy = hor - 66;
+  g.fillStyle = "#b23a2e";
+  g.fillRect(sx, sy, 90, 62);
+  g.fillStyle = "#7a2219";
+  g.beginPath();
+  g.moveTo(sx - 8, sy);
+  g.lineTo(sx + 45, sy - 34);
+  g.lineTo(sx + 98, sy);
+  g.closePath();
+  g.fill();
+  g.strokeStyle = "#ffffff";
+  g.lineWidth = 3;
+  g.strokeRect(sx + 30, sy + 22, 30, 40);
+  g.beginPath();
+  g.moveTo(sx + 30, sy + 22); g.lineTo(sx + 60, sy + 62);
+  g.moveTo(sx + 60, sy + 22); g.lineTo(sx + 30, sy + 62);
+  g.stroke();
+  g.fillStyle = "#c9ced4";
+  g.fillRect(sx + 102, sy - 30, 26, 92);
+  g.beginPath();
+  g.arc(sx + 115, sy - 30, 13, Math.PI, 0);
+  g.fill();
+
+  /* hooibalen */
+  [[90, hor + 8], [126, hor + 12], [250, hor + 6]].forEach(([x,y])=>{
+    g.fillStyle = "#e2c15a";
+    rond(x, y, 14);
+    g.strokeStyle = "#b99634";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.arc(x, y, 8, 0, Math.PI*2);
+    g.stroke();
+  });
+
+  /* wit hek langs de baan */
+  const hek = hor + 26;
+  g.strokeStyle = "#ffffff";
+  g.lineWidth = 3;
+  g.beginPath();
+  g.moveTo(0, hek); g.lineTo(B, hek);
+  g.moveTo(0, hek + 10); g.lineTo(B, hek + 10);
+  g.stroke();
+  g.fillStyle = "#ffffff";
+  for (let x = 6; x < B; x += 40) g.fillRect(x, hek - 6, 4, 22);
+
+  /* kleibaan met kluiten */
+  const baan = hek + 16;
+  const grond = g.createLinearGradient(0, baan, 0, startY);
+  grond.addColorStop(0, "#a06a3a");
+  grond.addColorStop(1, "#7d4e27");
+  g.fillStyle = grond;
+  g.fillRect(0, baan, B, startY - baan);
+  for (let i = 0; i < 220; i++){
+    g.fillStyle = `rgba(60,35,15,${.15 + r() * .25})`;
+    g.beginPath();
+    g.ellipse(r() * B, baan + r() * (startY - baan), 2 + r() * 5, 1 + r() * 2, 0, 0, Math.PI*2);
+    g.fill();
+  }
+
+  /* bandensporen */
+  [.4, .72].forEach(f=>{
+    const y = baan + (startY - baan) * f;
+    g.fillStyle = "rgba(50,28,10,.3)";
+    g.fillRect(0, y, B, 10);
+    g.fillStyle = "rgba(50,28,10,.45)";
+    for (let x = 0; x < B; x += 12){
+      g.beginPath();
+      g.moveTo(x, y); g.lineTo(x + 6, y + 5); g.lineTo(x, y + 10);
+      g.lineTo(x + 3, y + 10); g.lineTo(x + 9, y + 5); g.lineTo(x + 3, y);
+      g.closePath();
+      g.fill();
+    }
+  });
+
+  onderrand(g, "#4a2e14", "rgba(255,222,0,.7)");
 }
 
 /* ================= CONFETTI ================= */
@@ -1555,6 +2127,9 @@ function tekenGrafiek(w, t, extra){
     ctx.moveTo(startX,y);
     ctx.lineTo(eindX,y);
     ctx.stroke();
+    ctx.strokeStyle = "rgba(255,255,255,.85)";
+    ctx.lineWidth = 3;
+    ctx.strokeText(v.toFixed(dec)+"%", startX-8, y+4);
     ctx.fillStyle = "#161616";
     ctx.fillText(v.toFixed(dec)+"%", startX-8, y+4);
   }
@@ -1628,7 +2203,7 @@ function tekenGrafiek(w, t, extra){
     /* bolletje met fietser, gekanteld naar de helling */
     ctx.beginPath();
     ctx.arc(lb.x, lb.y, 13, 0, Math.PI*2);
-    ctx.fillStyle = lb.leider ? "#ffd400" : "#ffffff";
+    ctx.fillStyle = lb.leider ? T().accent : "#ffffff";
     ctx.fill();
     ctx.lineWidth = 3;
     ctx.strokeStyle = lb.s.kleur;
@@ -1636,10 +2211,10 @@ function tekenGrafiek(w, t, extra){
     ctx.save();
     ctx.translate(lb.x, lb.y);
     ctx.rotate(lb.hoek);
-    ctx.scale(-1,1);
+    if (T().spiegel) ctx.scale(-1,1);
     ctx.font = "16px Arial";
     ctx.textAlign = "center";
-    ctx.fillText("🚴", 0, 6);
+    ctx.fillText(T().icoon, 0, 6);
     ctx.restore();
 
     /* naamkaartje met actueel percentage (telt mee op tijdens het klimmen) */
@@ -1657,7 +2232,7 @@ function tekenGrafiek(w, t, extra){
       ctx.stroke();
     }
 
-    ctx.fillStyle = lb.leider ? "#ffd400" : lb.s.kleur;
+    ctx.fillStyle = lb.leider ? T().accent : lb.s.kleur;
     ctx.beginPath();
     ctx.roundRect(lx, ly - 12, tw, 18, 9);
     ctx.fill();
@@ -1706,7 +2281,7 @@ function teken(){
   document.getElementById("stats").innerHTML =
     Object.entries(spelers)
       .map(([n,s])=>`<span class="renner"><span class="stip" style="background:${s.kleur}"></span>
-        ${s.pct===hoogste && hoogste>0?"🟡 ":""}<strong>${n}</strong> ${s.bier}🍺 · ${s.pct.toFixed(1)}%</span>`)
+        ${s.pct===hoogste && hoogste>0?T().leider+" ":""}<strong>${n}</strong> ${s.bier}🍺 · ${s.pct.toFixed(1)}%</span>`)
       .join("");
 
   tekenTabel();
@@ -1744,12 +2319,12 @@ function tekenRanking(){
       <span>${n}</span><span class="score">${score}</span></li>`;
   r.innerHTML = `
     <div class="paneel klassement geel">
-      <div class="kop">${trui("#ffd400")} Gele trui <small style="font-family:Inter;text-transform:none;font-size:12px">alcohol %</small></div>
+      <div class="kop">${T().k1.icoon()} ${T().k1.naam} <small style="font-family:Inter;text-transform:none;font-size:12px">alcohol %</small></div>
       <ol>${geel.map(([n,s],i)=>rij(i,n,s,`${s.pct.toFixed(1)}% <small>${s.bier}🍺</small>`)).join("")}</ol>
     </div>
     <div class="paneel klassement groen">
-      <div class="kop">${trui("#1f9d55","#fff")} Groene trui <small style="font-family:Inter;text-transform:none;font-size:12px">sprintpunten</small></div>
-      <ol>${groen.map(([n,s],i)=>rij(i,n,s,`${s.groen} <small>pt</small>`)).join("")}</ol>
+      <div class="kop">${T().k2.icoon()} ${T().k2.naam} <small style="font-family:Inter;text-transform:none;font-size:12px">${T().k2.sub}</small></div>
+      <ol>${groen.map(([n,s],i)=>rij(i,n,s,`${s.groen} <small>${T().k2.eenheid}</small>`)).join("")}</ol>
     </div>`;
 }
 
@@ -1757,15 +2332,15 @@ function tekenRanking(){
 function effectTekst(e){
   switch(e.type){
     case "volgende":   return `<strong>${e.speler}</strong> volgende bier ${fmt(e.waarde)}${e.label?` (${e.label})`:""}`;
-    case "dubbel":     return `💉 <strong>${e.speler}</strong> volgende bier telt dubbel`;
-    case "factor":     return `⛰️ <strong>${e.speler}</strong> volgende bier telt ×${String(e.waarde).replace(".",",")}`;
+    case "dubbel":     return `${e.icoon||"💉"} <strong>${e.speler}</strong> volgende bier telt dubbel`;
+    case "factor":     return `${e.icoon||"⛰️"} <strong>${e.speler}</strong> volgende bier telt ×${String(e.waarde).replace(".",",")}`;
     case "opdracht":   return `<strong>${e.speler}</strong> moet eerst ${e.label}`;
-    case "knecht":     return `🤝 <strong>${e.knecht}</strong> drinkt voor <strong>${e.speler}</strong>`;
-    case "kopoverkop": return `🚴‍♂️ <strong>${e.speler}</strong> kop over kop met ${e.maat} (${fmt(e.waarde)})`;
-    case "leegloper":  return `🫗 <strong>${e.speler}</strong> leegloper: -1% per 5 min`;
+    case "knecht":     return `${e.icoon||"🤝"} <strong>${e.knecht}</strong> drinkt voor <strong>${e.speler}</strong>`;
+    case "kopoverkop": return `${e.icoon||"🚴‍♂️"} <strong>${e.speler}</strong> ${(e.titel||"kop over kop").toLowerCase()} met ${e.maat} (${fmt(e.waarde)})`;
+    case "leegloper":  return `${e.icoon||"🫗"} <strong>${e.speler}</strong> ${(e.titel||"leegloper").toLowerCase()}: -1% per 5 min`;
     case "wiel": {
       const rest = Math.max(0, Math.ceil((e.tot - Date.now())/60000));
-      return `😴 <strong>${e.speler}</strong> in het wiel, nog ${rest} min`;
+      return `${e.icoon||"😴"} <strong>${e.speler}</strong> ${(e.titel||"in het wiel").toLowerCase()}, nog ${rest} min`;
     }
   }
   return "";
@@ -1796,7 +2371,7 @@ function verwerkTijd(){
     if (e.type==="leegloper"){
       while (nu - e.laatste >= LEEGLOOP_INTERVAL){
         e.laatste += LEEGLOOP_INTERVAL;
-        geefPct(e.speler, -1, "🫗 leegloper");
+        geefPct(e.speler, -1, `${e.icoon||"🫗"} ${(e.titel||"leegloper").toLowerCase()}`);
         veranderd = true;
       }
     }
@@ -1954,32 +2529,32 @@ function pasToe(){
       break;
     }
     case "volgende":
-      data.effecten.push({ type:"volgende", speler:wie, waarde:k.waarde, label:k.label || k.titel.toLowerCase() });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"volgende", speler:wie, waarde:k.waarde, label:k.label || k.titel.toLowerCase() });
       break;
     case "dubbel":
-      data.effecten.push({ type:"dubbel", speler:wie });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"dubbel", speler:wie });
       break;
     case "factor":
-      data.effecten.push({ type:"factor", speler:wie, waarde:k.waarde });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"factor", speler:wie, waarde:k.waarde });
       break;
     case "opdracht":
-      data.effecten.push({ type:"opdracht", speler:wie, label:k.label });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"opdracht", speler:wie, label:k.label });
       break;
     case "knecht":
-      data.effecten.push({ type:"knecht", speler:wie, knecht:waarde("kMaat") });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"knecht", speler:wie, knecht:waarde("kMaat") });
       break;
     case "kopoverkop": {
       const maat = waarde("kMaat");
-      data.effecten.push({ type:"kopoverkop", speler:wie, maat, waarde:k.waarde });
-      data.effecten.push({ type:"kopoverkop", speler:maat, maat:wie, waarde:k.waarde });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"kopoverkop", speler:wie, maat, waarde:k.waarde });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"kopoverkop", speler:maat, maat:wie, waarde:k.waarde });
       break;
     }
     case "wiel":
-      data.effecten.push({ type:"wiel", speler:wie, tot: Date.now() + WIEL_DUUR });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"wiel", speler:wie, tot: Date.now() + WIEL_DUUR });
       break;
     case "leegloper":
       geefPct(wie, -1, wat);
-      data.effecten.push({ type:"leegloper", speler:wie, laatste: Date.now() });
+      data.effecten.push({ icoon:k.icoon, titel:k.titel, type:"leegloper", speler:wie, laatste: Date.now() });
       break;
     case "laatste":
       geefPct(laatste(), k.waarde, wat);
@@ -2017,12 +2592,13 @@ function voegToe(){
   const extra = [];
   const mijn = data.effecten.filter(e=>e.speler===ontvanger &&
     ["volgende","dubbel","factor","kopoverkop","leegloper","opdracht"].includes(e.type));
-  if (mijn.some(e=>e.type==="dubbel")){ v *= 2; extra.push("💉 dubbel"); }
-  mijn.filter(e=>e.type==="factor").forEach(e=>{ v *= e.waarde; extra.push(`⛰️ ×${String(e.waarde).replace(".",",")}`); });
+  const dubbel = mijn.find(e=>e.type==="dubbel");
+  if (dubbel){ v *= 2; extra.push(`${dubbel.icoon||"💉"} dubbel`); }
+  mijn.filter(e=>e.type==="factor").forEach(e=>{ v *= e.waarde; extra.push(`${e.icoon||"⛰️"} ×${String(e.waarde).replace(".",",")}`); });
   mijn.forEach(e=>{
     if (e.type==="volgende" || e.type==="kopoverkop"){
       v += e.waarde;
-      extra.push(`${fmt(e.waarde)} ${e.type==="kopoverkop"?"kop over kop":e.label}`);
+      extra.push(`${fmt(e.waarde)} ${e.type==="kopoverkop"?(e.titel||"kop over kop").toLowerCase():e.label}`);
     }
   });
 
@@ -2054,7 +2630,7 @@ function voegToe(){
   /* In het wiel: anderen die uitrusten krijgen +1% */
   data.effecten
     .filter(e=>e.type==="wiel" && e.tot > Date.now() && e.speler!==drinker)
-    .forEach(e=>geefPct(e.speler, 1, `😴 in het wiel (${drinker})`));
+    .forEach(e=>geefPct(e.speler, 1, `${e.icoon||"😴"} ${(e.titel||"in het wiel").toLowerCase()} (${drinker})`));
 
   const veld = document.getElementById("percentage");
   veld.value = "";
@@ -2078,6 +2654,7 @@ function naarGrafiek(){
 function undo(){
   if(!undoStapel.length){ melding("Niks om ongedaan te maken"); return; }
   data = JSON.parse(undoStapel.pop());
+  syncThema();
   opslaan();
   vulSelect();
   teken();
@@ -2086,7 +2663,7 @@ function undo(){
 function resetGame(){
   if(!confirm("Weet je het zeker? Alle biertjes, kaarten en truien gaan terug naar 0.")) return;
   snapshot();
-  data = nieuweData(data.namen);
+  data = { ...nieuweData(data.namen), thema: data.thema };
   data.gestart = true;
   opslaan();
   teken();
@@ -2199,7 +2776,7 @@ function sprintToekennen(){
   opslaan();
   sluitSprint();
   teken();
-  melding(winnaar ? `🟢 ${winnaar.naam} wint de tussensprint!` : "Sprint afgelopen");
+  melding(winnaar ? `${T().vlag} ${winnaar.naam} wint de ${T().sprintTitel.toLowerCase()}!` : "Sprint afgelopen");
 }
 
 function tekenSprint(){
@@ -2211,7 +2788,7 @@ function tekenSprint(){
   const namen = document.getElementById("sprintNamen");
 
   sub.innerHTML = {
-    klaar:    "Iedereen pakt zijn glas. Na het aftellen drinkt iedereen zijn biertje zo snel mogelijk leeg.<br><strong>1e: 5 pt · 2e: 3 pt · 3e: 1 pt</strong> voor de groene trui",
+    klaar:    `Iedereen pakt zijn glas. Na het aftellen drinkt iedereen zijn biertje zo snel mogelijk leeg.<br><strong>1e: 5 · 2e: 3 · 3e: 1 ${T().k2.eenheid}</strong> voor de ${T().k2.naam.toLowerCase()}`,
     aftellen: "Glazen omhoog...",
     race:     "Glas leeg? Tik direct op je naam!",
     finish:   "🏆 De sprint is beslist!"
@@ -2305,8 +2882,45 @@ function spelLoopt(){
   return data.gestart && (data.log.length > 0 || Object.values(data.spelers).some(s=>s.groen));
 }
 
+/* Thema alleen laten zien (teksten, kleuren, achtergrond), zonder de kaarten te wisselen */
+function pasThemaToe(t){
+  thema = THEMAS[t] ? t : "tour";
+  document.body.dataset.thema = thema;
+  const teksten = { ...T(), Deelnemers: T().deelnemers[0].toUpperCase() + T().deelnemers.slice(1) };
+  document.querySelectorAll("[data-t]").forEach(el=>{ el.textContent = teksten[el.dataset.t]; });
+  document.getElementById("nieuweRenner").placeholder = `Naam van een ${T().deelnemer}`;
+  document.title = `Speciaalbierdag ${T().editie} ${jaar}`;
+  achtergrondCache = null;
+}
+
+/* Thema van het lopende spel: ook de kaarten */
+function syncThema(){
+  KAARTEN = (THEMAS[data.thema] || THEMAS.tour).kaarten;
+  pasThemaToe(data.thema);
+}
+
+let startThema = "tour";
+
+function tekenThemas(){
+  document.getElementById("themas").innerHTML = Object.entries(THEMAS).map(([k,t])=>`
+    <button class="themakeuze ${k===startThema?"gekozen":""}" style="--t:${t.accent}" onclick="kiesThema('${k}')">
+      <span class="themaicoon">${t.icoon}</span>
+      <span class="themanaam">${t.naam}</span>
+      <span class="themasub">${t.kaarten.reduce((n,c)=>n+c.n,0)} kaarten</span>
+    </button>`).join("");
+}
+
+function kiesThema(k){
+  startThema = k;
+  pasThemaToe(k);
+  tekenThemas();
+  tekenStartLijst();
+}
+
 function openStart(){
   startLijst = [...data.namen];
+  startThema = data.thema || "tour";
+  tekenThemas();
   document.getElementById("startWaarschuwing").hidden = !spelLoopt();
   document.getElementById("terugKnop").hidden = !data.gestart;
   document.getElementById("startscherm").classList.add("open");
@@ -2320,17 +2934,19 @@ function openStart(){
 function sluitStart(){
   document.getElementById("startscherm").classList.remove("open");
   document.body.classList.remove("start-open");
+  /* een thema dat alleen bekeken is weer terugzetten */
+  if (thema !== (data.thema || "tour")){ syncThema(); teken(); }
 }
 
 function tekenStartLijst(){
   const ul = document.getElementById("renners");
   if (!startLijst.length){
-    ul.innerHTML = `<li class="renners-leeg" style="display:block">Nog geen renners. Voeg er hierboven een toe.</li>`;
+    ul.innerHTML = `<li class="renners-leeg" style="display:block">Nog geen ${T().deelnemers}. Voeg er hierboven een toe.</li>`;
   } else {
     ul.innerHTML = startLijst.map((n,i)=>`
       <li>
         <span class="stip" style="background:${KLEUREN[i % KLEUREN.length]}"></span>
-        <input value="${escape(n)}" maxlength="24" aria-label="Naam renner ${i+1}"
+        <input value="${escape(n)}" maxlength="24" aria-label="Naam ${T().deelnemer} ${i+1}"
           onchange="hernoemRenner(${i}, this.value)">
         <span class="rijknoppen">
           <button title="Omhoog" onclick="verplaatsRenner(${i},-1)" ${i===0?"disabled":""}>↑</button>
@@ -2342,7 +2958,7 @@ function tekenStartLijst(){
   const genoeg = startLijst.length >= 2;
   document.getElementById("startKnop").disabled = !genoeg;
   document.getElementById("aantalRenners").innerText =
-    `${startLijst.length} renner${startLijst.length===1?"":"s"}` + (genoeg ? "" : " · minimaal 2 nodig");
+    `${startLijst.length} ${startLijst.length===1 ? T().deelnemer : T().deelnemers}` + (genoeg ? "" : " · minimaal 2 nodig");
 }
 
 function rennerToevoegen(){
@@ -2350,7 +2966,7 @@ function rennerToevoegen(){
   const naam = veld.value.trim();
   if (!naam) return;
   if (startLijst.some(n=>n.toLowerCase()===naam.toLowerCase())){ melding(`${naam} staat er al in`); return; }
-  if (startLijst.length >= MAX_SPELERS){ melding(`Maximaal ${MAX_SPELERS} renners`); return; }
+  if (startLijst.length >= MAX_SPELERS){ melding(`Maximaal ${MAX_SPELERS} ${T().deelnemers}`); return; }
   startLijst.push(naam);
   veld.value = "";
   veld.focus();
@@ -2382,14 +2998,17 @@ function startSpel(){
   if (startLijst.length < 2) return;
   if (spelLoopt() && !confirm("Het huidige spel wordt gewist. Opnieuw starten?")) return;
   if (data.gestart) snapshot();
+  KAARTEN = THEMAS[startThema].kaarten;   /* nieuwe stapel uit de kaarten van het gekozen thema */
   data = nieuweData([...startLijst]);
+  data.thema = startThema;
   data.gestart = true;
+  syncThema();
   opslaan();
   vulSelect();
   teken();
   sluitStart();
   schudAnimatie();
-  melding("De Tour is begonnen! De kaarten zijn geschud 🔀");
+  melding(`Het spel is begonnen: ${T().naam}! De kaarten zijn geschud 🔀`);
 }
 
 function spelersAanpassen(){
@@ -2410,7 +3029,7 @@ if (!data.gestart && data.log.length) data.gestart = true;
 /* Jaartal van de editie: altijd het huidige jaar */
 const jaar = "'" + String(new Date().getFullYear()).slice(-2);
 document.querySelectorAll(".jaar").forEach(el=>{ el.textContent = jaar; });
-document.title = `Speciaalbierdag TDF-editie ${jaar}`;
+syncThema();
 
 try { if (localStorage.getItem(OPSLAG+"Beamer")) zetBeamer(true); } catch(e) {}
 
