@@ -236,7 +236,6 @@ button.ghost {
   50%      { translate: 0 -8px; rotate: 0deg; }
 }
 
-.schudknop { margin-top: 8px; }
 
 .stapelknop .label {
   position: absolute;
@@ -1010,7 +1009,6 @@ body.start-open { overflow: hidden; }
         <span class="label">Trek kaart</span>
       </button>
       <div class="stapelinfo" id="stapel"></div>
-      <button class="klein schudknop" onclick="schudStapel()">🔀 Schudden</button>
     </div>
     <div class="kaartplek" id="kaart">Trek een kaart voor de gekozen speler</div>
   </div>
@@ -1131,7 +1129,7 @@ const KLEUREN = [
   - kopoverkop: jij + ploegmaat volgende bier +1,5%
   - leegloper:  direct -1%, daarna elke 5 min -1% tijdens je volgende bier
 */
-const KAART_VERSIE = 2;
+const KAART_VERSIE = 3;   /* ophogen = lopende spellen krijgen een nieuw geschudde stapel */
 const KAARTEN = [
   /* uit Tour.docx */
   { n:1, icoon:"💥", titel:"Valpartij", tekst:"Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2 },
@@ -1248,10 +1246,20 @@ function schud(stapel){
   return stapel;
 }
 
-function nieuweStapel(){
+const isSprint = i => KAARTEN[i].type === "sprint";
+
+/* Nooit twee tussensprints achter elkaar, ook niet over het opnieuw schudden heen.
+   De stapel wordt van achteren getrokken (pop), "vorige" is de laatst getrokken kaart. */
+function sprintsVerspreid(stapel, vorige){
+  if (vorige !== undefined && isSprint(vorige) && isSprint(stapel.at(-1))) return false;
+  return !stapel.some((k,i)=>i>0 && isSprint(k) && isSprint(stapel[i-1]));
+}
+
+function nieuweStapel(vorige){
   const stapel = [];
   KAARTEN.forEach((k,i)=>{ for(let j=0;j<k.n;j++) stapel.push(i); });
-  return schud(stapel);
+  do { schud(stapel); } while (!sprintsVerspreid(stapel, vorige));
+  return stapel;
 }
 
 function nieuweData(namen){
@@ -1809,23 +1817,15 @@ function schudAnimatie(){
   knop.classList.add("schudt");
 }
 
-/* De resterende kaarten opnieuw schudden */
-function schudStapel(){
-  snapshot();
-  schud(data.stapel);
-  opslaan();
-  schudAnimatie();
-  melding(`Stapel geschud 🔀 (${data.stapel.length} kaarten)`);
-}
-
 function trekKaart(){
   snapshot();
   if (!data.stapel.length){
-    data.stapel = nieuweStapel();
+    data.stapel = nieuweStapel(data.laatsteKaart);
     schudAnimatie();
     melding("Stapel is opnieuw geschud 🔀");
   }
   data.huidigeKaart = { index: data.stapel.pop(), speler: select.value, toegepast: false, id: Date.now() };
+  data.laatsteKaart = data.huidigeKaart.index;
   opslaan();
   teken();
   if (KAARTEN[data.huidigeKaart.index].type === "sprint") setTimeout(openSprint, 900);
