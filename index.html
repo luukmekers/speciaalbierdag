@@ -665,6 +665,14 @@ body.beamer .beheer { display: none; }
 body[data-thema="voetbal"]     { --geel: #ff8a1f; }
 body[data-thema="handbal"]     { --geel: #5ec8f2; }
 body[data-thema="trekkertrek"] { --geel: #b5d334; }
+body[data-thema="carnaval"]    { --geel: #ff5ca8; }
+
+body[data-thema="carnaval"] #sprintshow {
+  background:
+    repeating-linear-gradient(115deg, rgba(255,255,255,.06) 0 40px, transparent 40px 80px),
+    radial-gradient(circle at 50% 30%, #c0479a, #3a1660 70%);
+  background-size: 200% 100%, 100% 100%;
+}
 
 body[data-thema="handbal"] #sprintshow {
   background:
@@ -715,6 +723,90 @@ body[data-thema="trekkertrek"] #sprintshow {
 .themanaam  { font-family: Oswald, Arial, sans-serif; text-transform: uppercase; font-size: 16px; }
 .themasub   { font-size: 12px; font-weight: 400; color: var(--zacht); }
 .themakeuze.gekozen .themasub { color: var(--zwart); }
+
+/* ===== Eigen kaartjes ===== */
+.eigenkaarten summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.eigenkaarten summary::-webkit-details-marker { display: none; }
+.eigenkaarten summary::after { content: "▾"; font-size: 18px; color: var(--zacht); }
+.eigenkaarten[open] summary::after { content: "▴"; }
+.eigenkaarten summary h2 { margin: 0; }
+.eigenkaarten summary small { font-family: Inter, Arial, sans-serif; text-transform: none; font-size: 13px; color: var(--zacht); letter-spacing: 0; }
+.eigenkaarten[open] summary { margin-bottom: 10px; }
+
+.kaartformulier {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 8px;
+}
+
+.kaartformulier textarea,
+.kaartformulier select,
+.kaartformulier .ek-waarde,
+.kaartformulier button { grid-column: 1 / -1; }
+
+.kaartformulier textarea {
+  font: inherit;
+  font-size: 16px;
+  padding: 11px 12px;
+  border: 2px solid var(--rand);
+  border-radius: 10px;
+  width: 100%;
+  resize: vertical;
+}
+
+.kaartformulier textarea:focus { outline: none; border-color: var(--zwart); }
+.ek-icoon { text-align: center; font-size: 22px; padding: 6px; }
+
+.ek-waarde {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.ek-waarde[hidden] { display: none; }
+.ek-waarde input { width: 110px; }
+.ek-waarde small { font-weight: 400; color: var(--zacht); }
+
+.eigenlijst {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.eigenlijst li {
+  display: grid;
+  grid-template-columns: 30px 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  background: #faf8f2;
+  border-radius: 10px;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
+.ek-lijsticoon { font-size: 22px; text-align: center; }
+.eigenlijst small { color: var(--zacht); }
+.ek-effect { font-weight: 700; font-size: 13px; }
+
+.eigenlijst button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-width: 1px;
+  border-color: var(--rand);
+  box-shadow: none;
+}
 
 /* ===== Spelbeheer ===== */
 .beheer summary {
@@ -825,6 +917,8 @@ body.start-open { overflow: hidden; }
 }
 
 .renners .rijknoppen button:disabled { opacity: .3; cursor: default; }
+
+.renners li.renners-leeg::before { content: none; }
 
 .renners-leeg {
   color: var(--zacht);
@@ -1117,6 +1211,30 @@ body.start-open { overflow: hidden; }
       <h2>🎨 Kies het thema</h2>
       <div class="themas" id="themas"></div>
     </div>
+    <details class="paneel eigenkaarten">
+      <summary><h2>✏️ Eigen kaartjes <small id="eigenAantal">(optioneel)</small></h2></summary>
+      <p class="start-uitleg">Verzin zelf kaartjes. Ze worden met de stapel van het gekozen thema geschud en blijven bewaard voor het volgende spel.</p>
+      <div class="kaartformulier">
+        <input id="ekIcoon" class="ek-icoon" value="⭐" maxlength="4" aria-label="Icoon van het kaartje">
+        <input id="ekTitel" placeholder="Naam van het kaartje" maxlength="30">
+        <textarea id="ekTekst" rows="2" maxlength="200" placeholder="Wat staat er op het kaartje? Bijvoorbeeld: drink je biertje op één been."></textarea>
+        <select id="ekType" onchange="ekTypeGewijzigd()" aria-label="Wat doet het kaartje?">
+          <option value="pct">Jij krijgt % erbij of eraf</option>
+          <option value="volgende">Je volgende biertje telt % meer of minder</option>
+          <option value="buren">Jij en degene links van je krijgen %</option>
+          <option value="kies">Je kiest iemand die % krijgt</option>
+          <option value="iedereen">Iedereen krijgt %</option>
+          <option value="opdracht">Eerst een opdracht, pas daarna verder drinken</option>
+          <option value="actie">Alleen een opdracht of actie (geen %)</option>
+        </select>
+        <label class="ek-waarde" id="ekWaardeVak">
+          <input id="ekWaarde" type="number" step="0.5" value="1" inputmode="decimal"> %
+          <small>negatief = eraf, bijvoorbeeld -2</small>
+        </label>
+        <button onclick="eigenKaartToevoegen()">＋ Kaartje toevoegen</button>
+      </div>
+      <ul class="eigenlijst" id="eigenLijst"></ul>
+    </details>
     <div class="paneel">
       <h2><span data-t="icoon">🚴</span> <span data-t="startVraag">Wie rijden er mee?</span></h2>
       <p class="start-uitleg">Zet de <span data-t="deelnemers">renners</span> in tafelvolgorde, met de klok mee. Dat bepaalt wie links en rechts van je zit bij de kaarten.</p>
@@ -1134,7 +1252,7 @@ body.start-open { overflow: hidden; }
       </div>
       <div class="start-onder">
         <button class="ghost" id="terugKnop" onclick="sluitStart()" hidden>← Terug naar spel</button>
-        <button class="primair startknop" id="startKnop" onclick="startSpel()">🏁 Start de Tour</button>
+        <button class="primair startknop" id="startKnop" onclick="startSpel()">🏁 Start het spel</button>
       </div>
     </div>
   </div>
@@ -1158,10 +1276,7 @@ body.start-open { overflow: hidden; }
 
 <script>
 /* ================= CONSTANTEN ================= */
-const STANDAARD_SPELERS = [
-  "Lukas","Panlat","Richard","Japi","Peter",
-  "Chin","Stifler","Sweba","Willy","Ta-DJ Pogabar"
-];
+const STANDAARD_SPELERS = [];   /* namen vul je zelf in op het startscherm */
 
 const KLEUREN = [
   "#e53935","#1e88e5","#43a047","#fb8c00","#8e24aa",
@@ -1188,7 +1303,7 @@ const KLEUREN = [
   - kopoverkop: jij + ploegmaat volgende bier +1,5%
   - leegloper:  direct -1%, daarna elke 5 min -1% tijdens je volgende bier
 */
-const KAART_VERSIE = 3;   /* ophogen = lopende spellen krijgen een nieuw geschudde stapel */
+const KAART_VERSIE = 4;   /* ophogen = lopende spellen krijgen een nieuw geschudde stapel */
 const TOUR_KAARTEN = [
   /* uit Tour.docx */
   { n:1, icoon:"💥", titel:"Valpartij", tekst:"Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2 },
@@ -1210,7 +1325,6 @@ const TOUR_KAARTEN = [
   { n:1, icoon:"📰", titel:"Afdaling", tekst:"Je zit in een afdaling, door het krantje blijf je lekker warm.", type:"pct", waarde:1 },
   { n:1, icoon:"🌪️", titel:"Waaier", tekst:"Je zit aan de verkeerde kant van de waaier.", type:"pct", waarde:-2 },
   { n:1, icoon:"🍃", titel:"Waaier", tekst:"Je zit aan de goede kant van de waaier.", type:"pct", waarde:2 },
-  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
   { n:1, icoon:"☕", titel:"Koffiemolen", tekst:"Koffiemolen, dit schiet niet op...", type:"pct", waarde:-2 },
   { n:1, icoon:"🚀", titel:"Mooie demarrage", tekst:"Wat een aanval!", type:"pct", waarde:2 },
   { n:1, icoon:"🎙️", titel:"Mart Smeets", tekst:"Je zeurt net zoals Mart Smeets.", type:"pct", waarde:-1 },
@@ -1286,7 +1400,6 @@ const VOETBAL_KAARTEN = [
   { n:1, icoon:"🏅", titel:"Man of the match", tekst:"De groep kiest samen de man of the match (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
   { n:1, icoon:"🧡", titel:"Oranjegekte", tekst:"Je hebt je helemaal in het oranje gehesen.", type:"pct", waarde:1 },
   { n:1, icoon:"🧤", titel:"Wereldredding", tekst:"Je keeper houdt de nul.", type:"pct", waarde:1.5 },
-  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
   { n:1, icoon:"😤", titel:"Opstootje", tekst:"Iedereen gaat staan en roept zo hard mogelijk: SCHEIDS!", type:"actie" },
   { n:1, icoon:"🎶", titel:"Volkslied", tekst:"Iedereen gaat staan en zingt het eerste couplet van het Wilhelmus.", type:"actie" }
 ];
@@ -1321,7 +1434,6 @@ const HANDBAL_KAARTEN = [
   { n:1, icoon:"🥅", titel:"Paal", tekst:"Tegen de paal en eruit.", type:"pct", waarde:-1 },
   { n:1, icoon:"🎙️", titel:"Commentator", tekst:"Je zeurt als een commentator die alles beter weet.", type:"pct", waarde:-1 },
   { n:1, icoon:"🎉", titel:"Thuispubliek", tekst:"Het thuispubliek scandeert je naam.", type:"pct", waarde:1 },
-  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
   { n:1, icoon:"🕺", titel:"Doelpuntviering", tekst:"Doe je beste doelpuntviering. De rest geeft je een cijfer.", type:"actie" }
 ];
 
@@ -1355,9 +1467,44 @@ const TREKKER_KAARTEN = [
   { n:1, icoon:"🪨", titel:"Vast in de klei", tekst:"Je zit muurvast. De trekker moet worden losgetrokken.", type:"pct", waarde:-2 },
   { n:1, icoon:"📏", titel:"Ver over de lijn", tekst:"Je trekt de sleepwagen ver over de lijn.", type:"pct", waarde:2 },
   { n:1, icoon:"⚖️", titel:"Goede maatjes met de jury", tekst:"De jury knijpt een oogje toe.", type:"pct", waarde:1.5 },
-  { n:1, icoon:"🎂", titel:"Verjaardag van Bart", tekst:"Je had eigenlijk bij de verjaardag van Bart moeten zijn.", type:"pct", waarde:-2 },
   { n:1, icoon:"🤠", titel:"Line dance", tekst:"Iedereen gaat staan voor een rondje line dance.", type:"actie" },
   { n:1, icoon:"📯", titel:"Toeteren", tekst:"Iedereen toetert tien seconden lang als een trekker.", type:"actie" }
+];
+
+
+const CARNAVAL_KAARTEN = [
+  { n:3, icoon:"👑", titel:"Prinsenrace", tekst:"Iedereen drinkt zijn biertje leeg, zo snel als het kan. Wie het eerst leeg is krijgt medailles van de Prins. 1e: 5, 2e: 3, 3e: 1 medaille.", type:"sprint" },
+  { n:1, icoon:"🚂", titel:"Polonaise", tekst:"Iedereen staat op en loopt een rondje polonaise om de tafel. Iedereen +1%.", type:"iedereen", waarde:1 },
+  { n:1, icoon:"☔", titel:"Optocht in de regen", tekst:"Het regent pijpenstelen en iedereen is doorweekt. Iedereen -1%.", type:"iedereen", waarde:-1 },
+  { n:1, icoon:"🙌", titel:"Hossen", tekst:"Hos mee met degene links van je. +2% voor allebei.", type:"buren", waarde:2, links:true },
+  { n:1, icoon:"🎉", titel:"Confetti in je bier", tekst:"Er dwarrelt confetti in de glazen. -2% voor jou en degene links en rechts naast je.", type:"buren", waarde:-2, links:true, rechts:true },
+  { n:1, icoon:"🤕", titel:"Kater van gisteren", tekst:"Je hebt nog last van gisteravond. Je volgende biertje telt 2% minder.", type:"volgende", waarde:-2, label:"kater" },
+  { n:1, icoon:"🪙", titel:"Gratis muntje", tekst:"Je vindt nog een muntje in je jaszak. Je volgende biertje +2%.", type:"volgende", waarde:2, label:"muntje" },
+  { n:1, icoon:"🕚", titel:"Elf-elf", tekst:"Het is de elfde van de elfde! Hoe zwaarder je volgende biertje, hoe meer het oplevert: het telt anderhalf keer.", type:"factor", waarde:1.5 },
+  { n:1, icoon:"🥃", titel:"Shotje van de Prins", tekst:"De Prins trakteert op een shotje. Je volgende biertje telt dubbel (geen % voor het shotje).", type:"dubbel" },
+  { n:1, icoon:"🤝", titel:"Arm in arm", tekst:"Kies een maatje en haak arm in arm. Jullie drinken het volgende biertje tegelijk (samen slokken, tegelijk leeg). Beloning: +1,5% voor allebei.", type:"kopoverkop", waarde:1.5 },
+  { n:1, icoon:"🫡", titel:"Adjudant", tekst:"Wijs een adjudant aan die zijn volgende biertje voor jou opdrinkt. Jij krijgt de %.", type:"knecht" },
+  { n:1, icoon:"🚻", titel:"Rij voor de wc", tekst:"Je staat 10 minuten in de rij voor de wc. Elke keer als iemand in die 10 minuten zijn bier op heeft, krijg jij 1%.", type:"wiel" },
+  { n:1, icoon:"💸", titel:"Muntjes op", tekst:"Je portemonnee is leeg. Direct 1% eraf, en tijdens je volgende biertje gaat er elke 5 minuten 1% af.", type:"leegloper" },
+  { n:1, icoon:"🥐", titel:"Worstenbroodje", tekst:"Eet een worstenbroodje (of iets anders van tafel) voordat je verder mag drinken.", type:"opdracht", label:"🥐 een worstenbroodje eten" },
+  { n:1, icoon:"🍟", titel:"Snackbar", tekst:"Haal een frietje of snack en eet die op voordat je verder mag drinken.", type:"opdracht", label:"🍟 een snack eten" },
+  { n:1, icoon:"🗝️", titel:"Sleutel van de stad", tekst:"De koploper moet de sleutel van de stad terugbrengen naar de burgemeester. -2% voor de koploper.", type:"koploper", waarde:-2 },
+  { n:1, icoon:"🐌", titel:"Achteraan de optocht", tekst:"De achterste wagen krijgt het hardste applaus. De nummer laatst krijgt +2%.", type:"laatste", waarde:2 },
+  { n:1, icoon:"💒", titel:"Boerenbruiloft", tekst:"Je trouwt voor één dagje. Kies je bruid of bruidegom: die krijgt +1,5%.", type:"kies", waarde:1.5 },
+  { n:1, icoon:"🎩", titel:"Raad van Elf", tekst:"De Raad van Elf deelt een boete uit. Kies iemand die -1,5% krijgt.", type:"kies", waarde:-1.5 },
+  { n:1, icoon:"🏅", titel:"Beste kostuum", tekst:"De groep kiest samen het beste kostuum (mag jij ook zijn). Die krijgt +2%.", type:"kies", waarde:2, alle:true },
+  { n:1, icoon:"🎊", titel:"Confettikanon", tekst:"Jij staat precies vooraan als het confettikanon afgaat.", type:"pct", waarde:2 },
+  { n:1, icoon:"🚚", titel:"Op de praalwagen", tekst:"Je mag meerijden op de mooiste praalwagen.", type:"pct", waarde:2 },
+  { n:1, icoon:"🎤", titel:"Buut", tekst:"Je buut in de ton valt erg goed.", type:"pct", waarde:1.5 },
+  { n:1, icoon:"👕", titel:"Kostuum vergeten", tekst:"Je bent in je gewone kleren gekomen. Foei.", type:"pct", waarde:-2 },
+  { n:1, icoon:"💄", titel:"Schmink uitgelopen", tekst:"Je schmink loopt in strepen over je gezicht.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🍻", titel:"Verkeerde kroeg", tekst:"Je zit al een uur in de verkeerde kroeg.", type:"pct", waarde:-1.5 },
+  { n:1, icoon:"🎭", titel:"Masker kwijt", tekst:"Niemand herkent je meer zonder je masker.", type:"pct", waarde:-1 },
+  { n:1, icoon:"🏠", titel:"Te vroeg naar huis", tekst:"Je wilde eigenlijk al naar huis. Nu niet meer!", type:"pct", waarde:-2 },
+  { n:1, icoon:"🥁", titel:"Zakdoekje leggen", tekst:"Je wint het spelletje met de grote trom.", type:"pct", waarde:1 },
+  { n:1, icoon:"📣", titel:"Alaaf!", tekst:"Iedereen staat op en roept drie keer zo hard mogelijk: ALAAF!", type:"actie" },
+  { n:1, icoon:"🎺", titel:"Dweilorkest", tekst:"Iedereen speelt luchtinstrument mee met het volgende nummer.", type:"actie" },
+  { n:1, icoon:"🎶", titel:"Carnavalskraker", tekst:"Zing het refrein van je favoriete carnavalsnummer. De rest zingt mee.", type:"actie" }
 ];
 
 const THEMAS = {
@@ -1408,12 +1555,27 @@ const THEMAS = {
     sprintTitel: "Full pull", vlag: "🏁",
     kaarten: TREKKER_KAARTEN,
     achtergrond: g => tekenBoerderij(g)
+  },
+  carnaval: {
+    naam: "Carnaval", icoon: "🥳", spiegel: false, accent: "#ff5ca8",
+    editie: "Carnavals-editie", sub: "Optocht door het speciaalbierrijk",
+    startSub: "Aanmelden voor de optocht", startVraag: "Wie lopen er mee in de optocht?",
+    deelnemer: "deelnemer", deelnemers: "deelnemers", kaartenNaam: "Carnavalskaarten",
+    leider: "👑",
+    k1: { naam: "Prins Carnaval", icoon: () => "👑" },
+    k2: { naam: "Medailles", sub: "van de Prins", eenheid: "med.", icoon: () => "🎖️" },
+    sprintTitel: "Prinsenrace", vlag: "🎉",
+    kaarten: CARNAVAL_KAARTEN,
+    achtergrond: g => tekenOptocht(g)
   }
 };
 
 let thema = "tour";
 const T = () => THEMAS[thema] || THEMAS.tour;
 let KAARTEN = TOUR_KAARTEN;
+
+/* De stapel: de kaarten van het thema plus de zelfgemaakte kaartjes */
+const stapelKaarten = (t, eigen) => [...(THEMAS[t] || THEMAS.tour).kaarten, ...(eigen || [])];
 
 const WIEL_DUUR = 10 * 60 * 1000;
 const LEEGLOOP_INTERVAL = 5 * 60 * 1000;
@@ -1494,7 +1656,7 @@ function nieuweData(namen){
 let data;
 try { data = JSON.parse(localStorage.getItem(OPSLAG)); } catch(e) { data = null; }
 if (!data || !data.namen || !data.spelers) data = nieuweData([...STANDAARD_SPELERS]);
-KAARTEN = (THEMAS[data.thema] || THEMAS.tour).kaarten;
+KAARTEN = stapelKaarten(data.thema, data.eigenKaarten);
 
 /* Kaartenset veranderd: stapel opnieuw schudden, stand blijft staan */
 if (data.kaartVersie !== KAART_VERSIE){
@@ -1866,6 +2028,106 @@ function tekenHal(g){
   for (let y = mid - doel/2; y < mid + doel/2; y += 10) g.fillRect(B - 16, y, 4, 5);
 
   onderrand(g, "#1d3557", "rgba(255,255,255,.6)");
+}
+
+/* ----- Trekkertrek: boerenland met kleibaan ----- */
+
+/* ----- Carnaval: optocht door een straat met trapgevels ----- */
+function tekenOptocht(g){
+  const r = zaad(31);
+  const straat = horizon(.5);
+
+  /* avondlucht */
+  const lucht = g.createLinearGradient(0, 0, 0, straat);
+  lucht.addColorStop(0, "#2a1450");
+  lucht.addColorStop(1, "#b04a8c");
+  g.fillStyle = lucht;
+  g.fillRect(0, 0, B, straat);
+
+  /* sterretjes */
+  g.fillStyle = "rgba(255,255,255,.7)";
+  for (let i = 0; i < 40; i++) g.fillRect(r() * B, r() * straat * .5, 1.5, 1.5);
+
+  /* huizen met trapgevels */
+  const gevels = ["#e8c07a","#c96b4f","#8fb3c9","#e7a1b0","#b7c97a","#d9d2c3","#c98f5a"];
+  for (let x = -10, i = 0; x < B; i++){
+    const w = 70 + r() * 30;
+    const h = (straat - topY) * (.55 + r() * .3);
+    const top = straat - h;
+    g.fillStyle = gevels[i % gevels.length];
+    /* romp + trapgevel (drie treden) */
+    g.beginPath();
+    g.moveTo(x, straat);
+    g.lineTo(x, top + 24);
+    const trede = w / 6;
+    for (let t = 0; t < 3; t++){
+      g.lineTo(x + trede * t, top + 24 - t * 8);
+      g.lineTo(x + trede * (t + 1), top + 24 - t * 8);
+    }
+    for (let t = 2; t >= 0; t--){
+      g.lineTo(x + w - trede * (t + 1), top + 24 - t * 8);
+      g.lineTo(x + w - trede * t, top + 24 - t * 8);
+    }
+    g.lineTo(x + w, straat);
+    g.closePath();
+    g.fill();
+    g.strokeStyle = "rgba(0,0,0,.25)";
+    g.lineWidth = 1;
+    g.stroke();
+    /* verlichte ramen */
+    for (let wy = top + 34; wy < straat - 22; wy += 26)
+      for (let wx = x + 12; wx < x + w - 18; wx += 22){
+        g.fillStyle = r() < .7 ? "#ffe08a" : "#3a2a4a";
+        g.fillRect(wx, wy, 12, 15);
+      }
+    x += w + 2;
+  }
+
+  /* vlaggenlijnen in rood, geel en groen */
+  const vlag = ["#e63946","#ffd400","#2a9d4f"];
+  [[.08, .2], [.22, .32]].forEach(([a, b], lijn)=>{
+    const y1 = horizon(a), y2 = horizon(b);
+    const draad = x => y1 + (y2 - y1) * Math.sin(x / B * Math.PI);
+    g.strokeStyle = "#333";
+    g.lineWidth = 1;
+    g.beginPath();
+    for (let x = 0; x <= B; x += 10) x ? g.lineTo(x, draad(x)) : g.moveTo(x, draad(x));
+    g.stroke();
+    for (let x = 8 + lijn * 9, i = 0; x < B; x += 20, i++){
+      const y = draad(x);
+      g.fillStyle = vlag[i % 3];
+      g.beginPath();
+      g.moveTo(x - 7, y);
+      g.lineTo(x + 7, y);
+      g.lineTo(x, y + 13);
+      g.closePath();
+      g.fill();
+    }
+  });
+
+  /* kinderkopjes */
+  g.fillStyle = "#6f6874";
+  g.fillRect(0, straat, B, startY - straat);
+  for (let y = straat + 4, rij = 0; y < startY; y += 11, rij++)
+    for (let x = (rij % 2) * 9; x < B; x += 18){
+      g.fillStyle = r() < .5 ? "#837b88" : "#7a7280";
+      g.beginPath();
+      g.ellipse(x + 8, y + 4, 8, 4.5, 0, 0, Math.PI*2);
+      g.fill();
+    }
+
+  /* confetti op straat */
+  const confetti = ["#e63946","#ffd400","#2a9d4f","#2f6fdb","#ff5ca8","#ffffff"];
+  for (let i = 0; i < 260; i++){
+    g.fillStyle = confetti[Math.floor(r() * confetti.length)];
+    g.save();
+    g.translate(r() * B, straat + r() * (startY - straat));
+    g.rotate(r() * Math.PI);
+    g.fillRect(-2.5, -1.2, 5, 2.4);
+    g.restore();
+  }
+
+  onderrand(g, "#2a1450", "rgba(255,212,0,.7)");
 }
 
 /* ----- Trekkertrek: boerenland met kleibaan ----- */
@@ -2479,7 +2741,7 @@ function tekenKaart(){
       <div class="kop">
         <div class="icoon">${k.icoon}</div>
         <div>
-          <div class="soort">${soort}</div>
+          <div class="soort">${k.eigen ? "✏️ Eigen kaart · " : ""}${soort}</div>
           <div class="titel">${k.titel}</div>
         </div>
       </div>
@@ -2663,7 +2925,7 @@ function undo(){
 function resetGame(){
   if(!confirm("Weet je het zeker? Alle biertjes, kaarten en truien gaan terug naar 0.")) return;
   snapshot();
-  data = { ...nieuweData(data.namen), thema: data.thema };
+  data = { ...nieuweData(data.namen), thema: data.thema, eigenKaarten: data.eigenKaarten };
   data.gestart = true;
   opslaan();
   teken();
@@ -2872,6 +3134,73 @@ addEventListener("resize", ()=>{
   if (weergave && !animatie) tekenGrafiek(weergave, 1, null);
 });
 
+/* ================= EIGEN KAARTJES ================= */
+/* Zelfgemaakte kaartjes worden bij de stapel van het thema geschud
+   en blijven op dit apparaat bewaard voor het volgende spel. */
+let startEigen = [];
+const schoon = t => String(t || "").replace(/[<>]/g, "").trim();
+const heeftWaarde = type => !["opdracht","actie"].includes(type);
+
+function leesEigen(){
+  try {
+    const bewaard = JSON.parse(localStorage.getItem(OPSLAG+"Eigen"));
+    if (Array.isArray(bewaard)) return bewaard;
+  } catch(e) {}
+  return (data.eigenKaarten || []).map(k=>({ ...k }));
+}
+
+function bewaarEigen(){
+  try { localStorage.setItem(OPSLAG+"Eigen", JSON.stringify(startEigen)); } catch(e) {}
+}
+
+function ekTypeGewijzigd(){
+  document.getElementById("ekWaardeVak").hidden = !heeftWaarde(document.getElementById("ekType").value);
+}
+
+function eigenKaartToevoegen(){
+  const icoon = schoon(document.getElementById("ekIcoon").value) || "⭐";
+  const titel = schoon(document.getElementById("ekTitel").value);
+  const type = document.getElementById("ekType").value;
+  const waarde = parseFloat(document.getElementById("ekWaarde").value);
+  const tekst = schoon(document.getElementById("ekTekst").value) || titel;
+  if (!titel){ melding("Geef het kaartje een naam"); return; }
+  if (heeftWaarde(type) && (isNaN(waarde) || !waarde)){ melding("Vul een percentage in, bijvoorbeeld 2 of -1,5"); return; }
+
+  const k = { n:1, eigen:true, icoon, titel, tekst, type };
+  if (heeftWaarde(type)) k.waarde = waarde;
+  if (type === "buren") k.links = true;
+  if (type === "volgende") k.label = titel.toLowerCase();
+  if (type === "opdracht") k.label = `${icoon} ${titel.toLowerCase()}`;
+  startEigen.push(k);
+  bewaarEigen();
+
+  document.getElementById("ekTitel").value = "";
+  document.getElementById("ekTekst").value = "";
+  tekenEigen();
+  tekenThemas();
+  melding(`Kaartje "${titel}" toegevoegd ✏️`);
+  document.getElementById("ekTitel").focus();
+}
+
+function verwijderEigen(i){
+  startEigen.splice(i, 1);
+  bewaarEigen();
+  tekenEigen();
+  tekenThemas();
+}
+
+function tekenEigen(){
+  document.getElementById("eigenAantal").textContent =
+    startEigen.length ? `(${startEigen.length} gemaakt)` : "(optioneel)";
+  document.getElementById("eigenLijst").innerHTML = startEigen.map((k,i)=>`
+    <li>
+      <span class="ek-lijsticoon">${k.icoon}</span>
+      <span><strong>${k.titel}</strong><br><small>${k.tekst}</small></span>
+      <span class="ek-effect ${klasse(k.waarde || 0)}">${k.waarde ? fmt(k.waarde) : "opdracht"}</span>
+      <button title="Verwijderen" onclick="verwijderEigen(${i})">✕</button>
+    </li>`).join("");
+}
+
 /* ================= STARTSCHERM ================= */
 let startLijst = [];
 const MAX_SPELERS = KLEUREN.length;
@@ -2895,7 +3224,7 @@ function pasThemaToe(t){
 
 /* Thema van het lopende spel: ook de kaarten */
 function syncThema(){
-  KAARTEN = (THEMAS[data.thema] || THEMAS.tour).kaarten;
+  KAARTEN = stapelKaarten(data.thema, data.eigenKaarten);
   pasThemaToe(data.thema);
 }
 
@@ -2906,7 +3235,7 @@ function tekenThemas(){
     <button class="themakeuze ${k===startThema?"gekozen":""}" style="--t:${t.accent}" onclick="kiesThema('${k}')">
       <span class="themaicoon">${t.icoon}</span>
       <span class="themanaam">${t.naam}</span>
-      <span class="themasub">${t.kaarten.reduce((n,c)=>n+c.n,0)} kaarten</span>
+      <span class="themasub">${t.kaarten.reduce((n,c)=>n+c.n,0)} kaarten${startEigen.length ? ` + ${startEigen.length} eigen` : ""}</span>
     </button>`).join("");
 }
 
@@ -2920,6 +3249,8 @@ function kiesThema(k){
 function openStart(){
   startLijst = [...data.namen];
   startThema = data.thema || "tour";
+  startEigen = leesEigen();
+  tekenEigen();
   tekenThemas();
   document.getElementById("startWaarschuwing").hidden = !spelLoopt();
   document.getElementById("terugKnop").hidden = !data.gestart;
@@ -2998,9 +3329,10 @@ function startSpel(){
   if (startLijst.length < 2) return;
   if (spelLoopt() && !confirm("Het huidige spel wordt gewist. Opnieuw starten?")) return;
   if (data.gestart) snapshot();
-  KAARTEN = THEMAS[startThema].kaarten;   /* nieuwe stapel uit de kaarten van het gekozen thema */
+  KAARTEN = stapelKaarten(startThema, startEigen);   /* nieuwe stapel: thema + eigen kaartjes */
   data = nieuweData([...startLijst]);
   data.thema = startThema;
+  data.eigenKaarten = startEigen.map(k=>({ ...k }));
   data.gestart = true;
   syncThema();
   opslaan();
